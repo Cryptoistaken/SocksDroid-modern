@@ -1,6 +1,6 @@
 SocksDroid-modern
 ---
-A modernized SOCKS5 client for Android 5.0+ (supporting up to Android 16)
+A modernized SOCKS5 client for Android 5.0+ (supporting up to Android 16). Original https://github.com/PeterCxy/SocksDroid
 
 This version features a modernized UI with Material You (Dynamic Colors) and introduces several new features:
 - **Profiles**: Save and manage multiple server configurations.
@@ -51,7 +51,7 @@ This project is licensed under GNU General Public License Version 3 or later.
 
 SocksDroid-modern
 ---
-Модернизированный SOCKS5-клиент для Android 5.0+ (с поддержкой вплоть до Android 16).
+Модернизированный SOCKS5-клиент для Android 5.0+ (с поддержкой вплоть до Android 16). Оригинал https://github.com/PeterCxy/SocksDroid
 
 Эта версия отличается обновленным пользовательским интерфейсом с поддержкой Material You (Dynamic Colors) и включает несколько новых функций:
 - **Профили (Profiles)**: Сохранение и управление несколькими конфигурациями серверов.
