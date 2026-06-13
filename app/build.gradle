@@ -1,0 +1,97 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace "net.typeblog.socks"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "net.typeblog.socks"
+        minSdk 21
+        targetSdk 34
+        versionCode 15
+        versionName "1.2.1"
+
+        externalNativeBuild {
+            ndkBuild {
+                abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            }
+        }
+    }
+
+    splits {
+        abi {
+            enable true
+            reset()
+            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            universalApk true
+        }
+    }
+
+    // Map for the version code that gives each ABI a unique version code
+    project.ext.versionCodes = ['armeabi-v7a': 1, 'arm64-v8a': 2, 'x86': 3, 'x86_64': 4]
+
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            def abi = output.getFilter(com.android.build.OutputFile.ABI)
+            if (abi != null) {
+                output.versionCodeOverride =
+                        project.ext.versionCodes.get(abi) * 67 + variant.versionCode
+            }
+        }
+    }
+
+    buildTypes {
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path "src/main/jni/Android.mk"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig true
+        aidl true
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs += 'src/main/jniLibs'
+        }
+    }
+}
+
+tasks.whenTaskAdded { task ->
+    if (task.name.toLowerCase().contains("nativebuild") || task.name.toLowerCase().contains("ndkbuild")) {
+        task.doLast {
+            copy {
+                from "build/intermediates/cxx"
+                include "**/obj/local/**/pdnsd"
+                include "**/obj/local/**/tun2socks"
+                into "src/main/jniLibs"
+                eachFile { details ->
+                    def segments = details.relativePath.segments
+                    def abi = segments[-2]
+                    def name = segments[-1]
+                    details.relativePath = new RelativePath(true, abi, "lib" + name + ".so")
+                }
+                includeEmptyDirs = false
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.google.android.material:material:1.11.0'
+}
