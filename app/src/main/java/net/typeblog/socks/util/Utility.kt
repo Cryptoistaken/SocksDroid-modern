@@ -16,6 +16,8 @@ import net.typeblog.socks.util.Constants.INTENT_PER_APP
 import net.typeblog.socks.util.Constants.INTENT_PORT
 import net.typeblog.socks.util.Constants.INTENT_ROUTE
 import net.typeblog.socks.util.Constants.INTENT_SERVER
+import net.typeblog.socks.util.Constants.INTENT_USERNAME
+import net.typeblog.socks.util.Constants.INTENT_PASSWORD
 import net.typeblog.socks.util.Constants.INTENT_UDP_GW
 import java.io.File
 import java.io.FileInputStream
