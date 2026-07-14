@@ -325,9 +325,12 @@ class ProfileFragment : PreferenceFragmentCompat(),
         mPrefAuto = findPreference(PREF_ADV_AUTO_CONNECT) as CheckBoxPreference?
             ?: throw IllegalStateException("Missing preference: $PREF_ADV_AUTO_CONNECT")
         mPrefDynamic = findPreference(PREF_DYNAMIC_COLORS) as? CheckBoxPreference
-        mPrefAdd = findPreference("prof_add_btn")!!
-        mPrefDel = findPreference("prof_del_btn")!!
-        mPrefAppSelector = findPreference("adv_app_selector")!!
+        mPrefAdd = findPreference("prof_add_btn") as Preference?
+            ?: throw IllegalStateException("Missing preference: prof_add_btn")
+        mPrefDel = findPreference("prof_del_btn") as Preference?
+            ?: throw IllegalStateException("Missing preference: prof_del_btn")
+        mPrefAppSelector = findPreference("adv_app_selector") as Preference?
+            ?: throw IllegalStateException("Missing preference: adv_app_selector")
 
         mPrefProfile.onPreferenceChangeListener = this
         mPrefServer.onPreferenceChangeListener = this
