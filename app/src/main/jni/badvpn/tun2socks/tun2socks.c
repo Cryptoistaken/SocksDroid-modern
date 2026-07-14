@@ -408,7 +408,9 @@ int main (int argc, char **argv)
 
     if (options.fake_proc) {
         // Fake process name to cheat on Lollipop
-        strcpy(argv[0], "net.typeblog.socks");
+        size_t len = strlen(argv[0]);
+        snprintf(argv[0], len, "%-*s", (int)(len - 1), "net.typeblog.socks");
+        argv[0][len - 1] = '\0';
         prctl(PR_SET_NAME, "net.typeblog.socks");
     }
 

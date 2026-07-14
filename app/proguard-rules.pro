@@ -15,3 +15,9 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# JNI native methods
+-keep class net.typeblog.socks.System { native <methods>; }
+
+# Keep all classes in the app (no stripping)
+-keep class net.typeblog.socks.** { *; }

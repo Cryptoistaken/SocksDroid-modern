@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 android {
     namespace "net.typeblog.socks"
@@ -10,6 +11,8 @@ android {
         targetSdk 34
         versionCode 15
         versionName "1.2.1"
+
+        ndkVersion "27.0.12077973"
 
         externalNativeBuild {
             ndkBuild {
@@ -43,7 +46,8 @@ android {
     buildTypes {
 
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -93,5 +97,10 @@ tasks.whenTaskAdded { task ->
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.0.21"
     implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.preference:preference-ktx:1.2.1'
+    implementation 'androidx.activity:activity-ktx:1.9.0'
 }

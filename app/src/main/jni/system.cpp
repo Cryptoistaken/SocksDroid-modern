@@ -36,12 +36,6 @@ jstring Java_net_typeblog_socks_system_getabi(JNIEnv *env, jobject thiz) {
   return env->NewStringUTF(abi);
 }
 
-void Java_net_typeblog_socks_system_exec(JNIEnv *env, jobject thiz, jstring cmd) {
-    const char *str  = env->GetStringUTFChars(cmd, 0);
-    system(str);
-    env->ReleaseStringUTFChars(cmd, str);
-}
-
 void Java_net_typeblog_socks_system_jniclose(JNIEnv *env, jobject thiz, jint fd) {
     close(fd);
 }
@@ -83,8 +77,6 @@ static JNINativeMethod method_table[] = {
         (void*) Java_net_typeblog_socks_system_jniclose },
     { "sendfd", "(I)I",
         (void*) Java_net_typeblog_socks_system_sendfd },
-    { "exec", "(Ljava/lang/String;)V",
-        (void*) Java_net_typeblog_socks_system_exec },
     { "getABI", "()Ljava/lang/String;",
         (void*) Java_net_typeblog_socks_system_getabi }
 };
