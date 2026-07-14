@@ -25,3 +25,6 @@
 # R8: javax.annotation classes are referenced by com.google.crypto.tink but not on compile classpath
 -dontwarn javax.annotation.**
 -keep class javax.annotation.** { *; }
+
+# Keep AndroidX Preference classes (used via dynamic casts in PreferenceFragmentCompat)
+-keep class androidx.preference.** { *; }
