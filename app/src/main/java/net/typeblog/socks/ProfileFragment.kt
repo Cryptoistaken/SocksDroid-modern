@@ -16,7 +16,6 @@ import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceManager
-import android.text.InputType
 import android.text.TextUtils
 import android.util.Log
 import android.widget.CompoundButton
@@ -402,32 +401,12 @@ class ProfileFragment : PreferenceFragmentCompat(),
 
     private fun resetText(vararg pref: EditTextPreference) {
         for (p in pref) {
-            val editText = p.getEditText()
-            if (editText != null && (editText.inputType and InputType.TYPE_TEXT_VARIATION_PASSWORD) != InputType.TYPE_TEXT_VARIATION_PASSWORD) {
-                p.summary = p.text ?: ""
-            } else {
-                val text = p.text ?: ""
-                p.summary = if (text.isNotEmpty()) {
-                    "*".repeat(text.length)
-                } else {
-                    ""
-                }
-            }
+            p.summary = p.text ?: ""
         }
     }
 
     private fun resetTextN(pref: EditTextPreference, newValue: Any?) {
-        val editText = pref.getEditText()
-        if (editText != null && (editText.inputType and InputType.TYPE_TEXT_VARIATION_PASSWORD) != InputType.TYPE_TEXT_VARIATION_PASSWORD) {
-            pref.summary = newValue.toString()
-        } else {
-            val text = newValue.toString()
-            pref.summary = if (text.isNotEmpty()) {
-                "*".repeat(text.length)
-            } else {
-                ""
-            }
-        }
+        pref.summary = newValue.toString()
     }
 
     // ---- Profile management ----
