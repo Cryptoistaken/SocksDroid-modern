@@ -21,3 +21,7 @@
 
 # Keep all classes in the app (no stripping)
 -keep class net.typeblog.socks.** { *; }
+
+# R8: javax.annotation classes are referenced by com.google.crypto.tink but not on compile classpath
+-dontwarn javax.annotation.**
+-keep class javax.annotation.** { *; }
