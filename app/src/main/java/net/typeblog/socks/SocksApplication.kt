@@ -1,7 +1,7 @@
 package net.typeblog.socks
 
 import android.app.Application
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 
 import com.google.android.material.color.DynamicColors
 
