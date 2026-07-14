@@ -32,7 +32,23 @@ import com.google.android.material.materialswitch.MaterialSwitch
 import net.typeblog.socks.util.Profile
 import net.typeblog.socks.util.ProfileManager
 import net.typeblog.socks.util.Utility
-import net.typeblog.socks.util.Constants.*
+import net.typeblog.socks.util.Constants.PREF_ADV_AUTO_CONNECT
+import net.typeblog.socks.util.Constants.PREF_ADV_APP_BYPASS
+import net.typeblog.socks.util.Constants.PREF_ADV_APP_LIST
+import net.typeblog.socks.util.Constants.PREF_ADV_DNS
+import net.typeblog.socks.util.Constants.PREF_ADV_DNS_PORT
+import net.typeblog.socks.util.Constants.PREF_ADV_PER_APP
+import net.typeblog.socks.util.Constants.PREF_ADV_ROUTE
+import net.typeblog.socks.util.Constants.PREF_AUTH_PASSWORD
+import net.typeblog.socks.util.Constants.PREF_AUTH_USERNAME
+import net.typeblog.socks.util.Constants.PREF_AUTH_USERPW
+import net.typeblog.socks.util.Constants.PREF_DYNAMIC_COLORS
+import net.typeblog.socks.util.Constants.PREF_IPV6_PROXY
+import net.typeblog.socks.util.Constants.PREF_PROFILE
+import net.typeblog.socks.util.Constants.PREF_SERVER_IP
+import net.typeblog.socks.util.Constants.PREF_SERVER_PORT
+import net.typeblog.socks.util.Constants.PREF_UDP_GW
+import net.typeblog.socks.util.Constants.PREF_UDP_PROXY
 
 class ProfileFragment : PreferenceFragmentCompat(),
     Preference.OnPreferenceClickListener,
@@ -68,9 +84,11 @@ class ProfileFragment : PreferenceFragmentCompat(),
         }
     }
 
-    private val mStateRunnable = Runnable {
-        updateState()
-        mSwitch?.postDelayed(this, 1000)
+    private val mStateRunnable = object : Runnable {
+        override fun run() {
+            updateState()
+            mSwitch?.postDelayed(this, 1000)
+        }
     }
 
     private val vpnPrepareLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
@@ -166,82 +184,82 @@ class ProfileFragment : PreferenceFragmentCompat(),
                 true
             }
             mPrefServer -> {
-                mProfile!!.server = newValue.toString()
+                mProfile!!.setServer(newValue.toString())
                 resetTextN(mPrefServer, newValue)
                 true
             }
             mPrefPort -> {
                 if (TextUtils.isEmpty(newValue.toString())) return false
-                mProfile!!.port = Integer.parseInt(newValue.toString())
+                mProfile!!.setPort(Integer.parseInt(newValue.toString()))
                 resetTextN(mPrefPort, newValue)
                 true
             }
             mPrefUserpw -> {
-                mProfile!!.isUserPw = java.lang.Boolean.parseBoolean(newValue.toString())
+                mProfile!!.setIsUserpw(java.lang.Boolean.parseBoolean(newValue.toString()))
                 true
             }
             mPrefUsername -> {
-                mProfile!!.username = newValue.toString()
+                mProfile!!.setUsername(newValue.toString())
                 resetTextN(mPrefUsername, newValue)
                 true
             }
             mPrefPassword -> {
-                mProfile!!.password = newValue.toString()
+                mProfile!!.setPassword(newValue.toString())
                 resetTextN(mPrefPassword, newValue)
                 true
             }
             mPrefRoutes -> {
-                mProfile!!.route = newValue.toString()
+                mProfile!!.setRoute(newValue.toString())
                 resetListN(mPrefRoutes, newValue)
                 true
             }
             mPrefDnsPresets -> {
                 val preset = newValue.toString()
                 if (!TextUtils.isEmpty(preset)) {
-                    mProfile!!.dns = preset
+                    mProfile!!.setDns(preset)
                     resetTextN(mPrefDns, preset)
                     mPrefDns.text = preset
                 }
                 true
             }
             mPrefDns -> {
-                mProfile!!.dns = newValue.toString()
+                mProfile!!.setDns(newValue.toString())
                 resetTextN(mPrefDns, newValue)
                 true
             }
             mPrefDnsPort -> {
                 if (TextUtils.isEmpty(newValue.toString())) return false
-                mProfile!!.dnsPort = Integer.valueOf(newValue.toString())
+                mProfile!!.setDnsPort(Integer.valueOf(newValue.toString()))
                 resetTextN(mPrefDnsPort, newValue)
                 true
             }
             mPrefPerApp -> {
-                mProfile!!.isPerApp = java.lang.Boolean.parseBoolean(newValue.toString())
+                mProfile!!.setIsPerApp(java.lang.Boolean.parseBoolean(newValue.toString()))
                 true
             }
             mPrefAppBypass -> {
-                mProfile!!.isBypassApp = java.lang.Boolean.parseBoolean(newValue.toString())
+                mProfile!!.setIsBypassApp(java.lang.Boolean.parseBoolean(newValue.toString()))
                 true
             }
             mPrefAppList -> {
-                mProfile!!.appList = newValue.toString()
+                mProfile!!.setAppList(newValue.toString())
                 true
             }
             mPrefIPv6 -> {
-                mProfile!!.hasIPv6 = java.lang.Boolean.parseBoolean(newValue.toString())
+                mProfile!!.setHasIPv6(java.lang.Boolean.parseBoolean(newValue.toString()))
                 true
             }
             mPrefUDP -> {
-                mProfile!!.hasUDP = java.lang.Boolean.parseBoolean(newValue.toString())
+                mProfile!!.setHasUDP(java.lang.Boolean.parseBoolean(newValue.toString()))
                 true
             }
             mPrefUDPGW -> {
-                mProfile!!.udpgw = newValue.toString()
+                mProfile!!.setUDPGW(newValue.toString())
                 resetTextN(mPrefUDPGW, newValue)
                 true
             }
             mPrefAuto -> {
-                mProfile!!.autoConnect = java.lang.Boolean.parseBoolean(newValue.toString())
+                mProfile!!.setAutoConnect(java.lang.Boolean.parseBoolean(newValue.toString()))
                 true
             }
             mPrefDynamic -> {
@@ -272,23 +290,40 @@ class ProfileFragment : PreferenceFragmentCompat(),
     // ---- Preference wiring ----
 
     private fun initPreferences() {
-        mPrefProfile = findPreference(PREF_PROFILE) as ListPreference
-        mPrefServer = findPreference(PREF_SERVER_IP) as EditTextPreference
-        mPrefPort = findPreference(PREF_SERVER_PORT) as EditTextPreference
-        mPrefUserpw = findPreference(PREF_AUTH_USERPW) as CheckBoxPreference
-        mPrefUsername = findPreference(PREF_AUTH_USERNAME) as EditTextPreference
-        mPrefPassword = findPreference(PREF_AUTH_PASSWORD) as EditTextPreference
-        mPrefRoutes = findPreference(PREF_ADV_ROUTE) as ListPreference
-        mPrefDnsPresets = findPreference("adv_dns_presets") as ListPreference
-        mPrefDns = findPreference(PREF_ADV_DNS) as EditTextPreference
-        mPrefDnsPort = findPreference(PREF_ADV_DNS_PORT) as EditTextPreference
-        mPrefPerApp = findPreference(PREF_ADV_PER_APP) as CheckBoxPreference
-        mPrefAppBypass = findPreference(PREF_ADV_APP_BYPASS) as CheckBoxPreference
-        mPrefAppList = findPreference(PREF_ADV_APP_LIST) as EditTextPreference
-        mPrefIPv6 = findPreference(PREF_IPV6_PROXY) as CheckBoxPreference
-        mPrefUDP = findPreference(PREF_UDP_PROXY) as CheckBoxPreference
-        mPrefUDPGW = findPreference(PREF_UDP_GW) as EditTextPreference
-        mPrefAuto = findPreference(PREF_ADV_AUTO_CONNECT) as CheckBoxPreference
+        mPrefProfile = findPreference(PREF_PROFILE) as ListPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_PROFILE")
+        mPrefServer = findPreference(PREF_SERVER_IP) as EditTextPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_SERVER_IP")
+        mPrefPort = findPreference(PREF_SERVER_PORT) as EditTextPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_SERVER_PORT")
+        mPrefUserpw = findPreference(PREF_AUTH_USERPW) as CheckBoxPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_AUTH_USERPW")
+        mPrefUsername = findPreference(PREF_AUTH_USERNAME) as EditTextPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_AUTH_USERNAME")
+        mPrefPassword = findPreference(PREF_AUTH_PASSWORD) as EditTextPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_AUTH_PASSWORD")
+        mPrefRoutes = findPreference(PREF_ADV_ROUTE) as ListPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_ADV_ROUTE")
+        mPrefDnsPresets = findPreference("adv_dns_presets") as ListPreference?
+            ?: throw IllegalStateException("Missing preference: adv_dns_presets")
+        mPrefDns = findPreference(PREF_ADV_DNS) as EditTextPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_ADV_DNS")
+        mPrefDnsPort = findPreference(PREF_ADV_DNS_PORT) as EditTextPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_ADV_DNS_PORT")
+        mPrefPerApp = findPreference(PREF_ADV_PER_APP) as CheckBoxPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_ADV_PER_APP")
+        mPrefAppBypass = findPreference(PREF_ADV_APP_BYPASS) as CheckBoxPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_ADV_APP_BYPASS")
+        mPrefAppList = findPreference(PREF_ADV_APP_LIST) as EditTextPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_ADV_APP_LIST")
+        mPrefIPv6 = findPreference(PREF_IPV6_PROXY) as CheckBoxPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_IPV6_PROXY")
+        mPrefUDP = findPreference(PREF_UDP_PROXY) as CheckBoxPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_UDP_PROXY")
+        mPrefUDPGW = findPreference(PREF_UDP_GW) as EditTextPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_UDP_GW")
+        mPrefAuto = findPreference(PREF_ADV_AUTO_CONNECT) as CheckBoxPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_ADV_AUTO_CONNECT")
         mPrefDynamic = findPreference(PREF_DYNAMIC_COLORS) as? CheckBoxPreference
         mPrefAdd = findPreference("prof_add_btn")!!
         mPrefDel = findPreference("prof_del_btn")!!
@@ -321,35 +356,35 @@ class ProfileFragment : PreferenceFragmentCompat(),
 
     private fun reload() {
         if (mProfile == null) {
-            mProfile = mManager.default
+            mProfile = mManager.getDefault()
         }
 
-        mPrefProfile.entries = mManager.profiles
-        mPrefProfile.entryValues = mManager.profiles
-        mPrefProfile.value = mProfile!!.name
-        mPrefRoutes.value = mProfile!!.route
+        mPrefProfile.entries = mManager.getProfiles()
+        mPrefProfile.entryValues = mManager.getProfiles()
+        mPrefProfile.value = mProfile!!.getName()
+        mPrefRoutes.value = mProfile!!.getRoute()
         resetList(mPrefProfile, mPrefRoutes)
 
-        mPrefUserpw.isChecked = mProfile!!.isUserPw
-        mPrefPerApp.isChecked = mProfile!!.isPerApp
-        mPrefAppBypass.isChecked = mProfile!!.isBypassApp
-        mPrefIPv6.isChecked = mProfile!!.hasIPv6
-        mPrefUDP.isChecked = mProfile!!.hasUDP
-        mPrefAuto.isChecked = mProfile!!.autoConnect
+        mPrefUserpw.isChecked = mProfile!!.isUserPw()
+        mPrefPerApp.isChecked = mProfile!!.isPerApp()
+        mPrefAppBypass.isChecked = mProfile!!.isBypassApp()
+        mPrefIPv6.isChecked = mProfile!!.hasIPv6()
+        mPrefUDP.isChecked = mProfile!!.hasUDP()
+        mPrefAuto.isChecked = mProfile!!.autoConnect()
 
         mPrefDynamic?.isChecked = PreferenceManager.getDefaultSharedPreferences(requireActivity())
             .getBoolean(PREF_DYNAMIC_COLORS, true)
 
-        mPrefServer.text = mProfile!!.server
-        mPrefPort.text = mProfile!!.port.toString()
-        mPrefUsername.text = mProfile!!.username
-        mPrefPassword.text = mProfile!!.password
-        mPrefDns.text = mProfile!!.dns
-        mPrefDnsPort.text = mProfile!!.dnsPort.toString()
-        mPrefUDPGW.text = mProfile!!.udpgw
+        mPrefServer.text = mProfile!!.getServer()
+        mPrefPort.text = mProfile!!.getPort().toString()
+        mPrefUsername.text = mProfile!!.getUsername()
+        mPrefPassword.text = mProfile!!.getPassword()
+        mPrefDns.text = mProfile!!.getDns()
+        mPrefDnsPort.text = mProfile!!.getDnsPort().toString()
+        mPrefUDPGW.text = mProfile!!.getUDPGW()
         resetText(mPrefServer, mPrefPort, mPrefUsername, mPrefPassword, mPrefDns, mPrefDnsPort, mPrefUDPGW)
 
-        mPrefAppList.text = mProfile!!.appList
+        mPrefAppList.text = mProfile!!.getAppList()
     }
 
     private fun resetList(vararg pref: ListPreference) {
@@ -420,16 +455,16 @@ class ProfileFragment : PreferenceFragmentCompat(),
     private fun removeProfile() {
         AlertDialog.Builder(requireActivity())
             .setTitle(R.string.prof_del)
-            .setMessage(getString(R.string.prof_del_confirm, mProfile!!.name))
+            .setMessage(getString(R.string.prof_del_confirm, mProfile!!.getName()))
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                if (!mManager.removeProfile(mProfile!!.name)) {
+                if (!mManager.removeProfile(mProfile!!.getName())) {
                     Toast.makeText(
                         requireActivity(),
-                        getString(R.string.err_del_prof, mProfile!!.name),
+                        getString(R.string.err_del_prof, mProfile!!.getName()),
                         Toast.LENGTH_SHORT
                     ).show()
                 } else {
-                    mProfile = mManager.default
+                    mProfile = mManager.getDefault()
                     reload()
                 }
             }
@@ -455,8 +490,8 @@ class ProfileFragment : PreferenceFragmentCompat(),
     }
 
     private fun showAppSelector() {
-        AppSelector.show(requireActivity(), mProfile!!.appList) { appList ->
-            mProfile!!.appList = appList
+        AppSelector.show(requireActivity(), mProfile!!.getAppList()) { appList ->
+            mProfile!!.setAppList(appList)
             mPrefAppList.text = appList
         }
     }

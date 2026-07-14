@@ -17,7 +17,19 @@ import android.util.Log
 import net.typeblog.socks.R
 import net.typeblog.socks.util.Routes
 import net.typeblog.socks.util.Utility
-import net.typeblog.socks.util.Constants.*
+import net.typeblog.socks.util.Constants.INTENT_APP_BYPASS
+import net.typeblog.socks.util.Constants.INTENT_APP_LIST
+import net.typeblog.socks.util.Constants.INTENT_DNS
+import net.typeblog.socks.util.Constants.INTENT_DNS_PORT
+import net.typeblog.socks.util.Constants.INTENT_IPV6_PROXY
+import net.typeblog.socks.util.Constants.INTENT_NAME
+import net.typeblog.socks.util.Constants.INTENT_PASSWORD
+import net.typeblog.socks.util.Constants.INTENT_PER_APP
+import net.typeblog.socks.util.Constants.INTENT_PORT
+import net.typeblog.socks.util.Constants.INTENT_ROUTE
+import net.typeblog.socks.util.Constants.INTENT_SERVER
+import net.typeblog.socks.util.Constants.INTENT_UDP_GW
+import net.typeblog.socks.util.Constants.INTENT_USERNAME
 import net.typeblog.socks.BuildConfig.DEBUG
 
 class SocksVpnService : VpnService() {
@@ -149,7 +161,7 @@ class SocksVpnService : VpnService() {
     private fun configure(name: String?, route: String?, perApp: Boolean, bypass: Boolean, apps: Array<String>?, ipv6: Boolean) {
         val b = Builder()
         b.setMtu(1500)
-            .setSession(name)
+            .setSession(name ?: "SocksDroid")
             .addAddress("10.10.10.1", 24)
             .addDnsServer("8.8.8.8")
 
@@ -159,7 +171,7 @@ class SocksVpnService : VpnService() {
                 .addRoute("::", 0)
         }
 
-        Routes.addRoutes(this, b, route)
+        Routes.addRoutes(this, b, route ?: "all")
 
         // Add the default DNS
         // Note that this DNS is just a stub.
@@ -213,7 +225,7 @@ class SocksVpnService : VpnService() {
 
     private fun start(fd: Int, server: String?, port: Int, user: String?, passwd: String?, dns: String?, dnsPort: Int, ipv6: Boolean, udpgw: String?) {
         // Start DNS daemon first
-        Utility.makePdnsdConf(this, dns, dnsPort)
+        Utility.makePdnsdConf(this, dns ?: "8.8.8.8", dnsPort)
 
         val libDir = applicationInfo.nativeLibraryDir
         val dir = filesDir.absolutePath

@@ -168,7 +168,7 @@ object Utility {
 
         if (profile.isPerApp()) {
             i.putExtra(INTENT_APP_BYPASS, profile.isBypassApp())
-                .putExtra(INTENT_APP_LIST, profile.getAppList().split("\n"))
+                .putExtra(INTENT_APP_LIST, profile.getAppList().split("\n").toTypedArray())
         }
 
         if (profile.hasUDP()) {

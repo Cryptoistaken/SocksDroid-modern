@@ -12,7 +12,7 @@ import net.typeblog.socks.BuildConfig.DEBUG
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val p: Profile = ProfileManager.getInstance(context).default
+        val p: Profile = ProfileManager.getInstance(context).getDefault()
 
         if (p.autoConnect() && VpnService.prepare(context) == null) {
             if (DEBUG) {
