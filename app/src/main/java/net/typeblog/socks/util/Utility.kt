@@ -171,6 +171,9 @@ object Utility {
                 .putExtra(INTENT_APP_LIST, profile.getAppList().split("\n").toTypedArray())
         }
 
+        i.putExtra(INTENT_USERNAME, profile.getUsername())
+        i.putExtra(INTENT_PASSWORD, profile.getPassword())
+
         if (profile.hasUDP()) {
             i.putExtra(INTENT_UDP_GW, profile.getUDPGW())
         }

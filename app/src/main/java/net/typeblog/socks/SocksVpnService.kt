@@ -247,8 +247,14 @@ class SocksVpnService : VpnService() {
             "--pid", "$dir/tun2socks.pid"
         )
 
-        // Note: SOCKS5 auth is handled at connection time, not at tun2socks startup.
-        // --username/--password are not needed here.
+        if (!user.isNullOrEmpty()) {
+            command.add("--username")
+            command.add(user!!)
+        }
+        if (!passwd.isNullOrEmpty()) {
+            command.add("--password")
+            command.add(passwd!!)
+        }
 
         if (ipv6) {
             command.add("--netif-ip6addr")
