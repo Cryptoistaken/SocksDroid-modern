@@ -402,11 +402,13 @@ class ProfileFragment : PreferenceFragmentCompat(),
 
     private fun resetText(vararg pref: EditTextPreference) {
         for (p in pref) {
-            if ((p.editText.inputType and InputType.TYPE_TEXT_VARIATION_PASSWORD) != InputType.TYPE_TEXT_VARIATION_PASSWORD) {
-                p.summary = p.text
+            val editText = p.getEditText()
+            if (editText != null && (editText.inputType and InputType.TYPE_TEXT_VARIATION_PASSWORD) != InputType.TYPE_TEXT_VARIATION_PASSWORD) {
+                p.summary = p.text ?: ""
             } else {
-                p.summary = if (p.text.isNotEmpty()) {
-                    "*".repeat(p.text.length)
+                val text = p.text ?: ""
+                p.summary = if (text.isNotEmpty()) {
+                    "*".repeat(text.length)
                 } else {
                     ""
                 }
@@ -415,7 +417,8 @@ class ProfileFragment : PreferenceFragmentCompat(),
     }
 
     private fun resetTextN(pref: EditTextPreference, newValue: Any?) {
-        if ((pref.editText.inputType and InputType.TYPE_TEXT_VARIATION_PASSWORD) != InputType.TYPE_TEXT_VARIATION_PASSWORD) {
+        val editText = pref.getEditText()
+        if (editText != null && (editText.inputType and InputType.TYPE_TEXT_VARIATION_PASSWORD) != InputType.TYPE_TEXT_VARIATION_PASSWORD) {
             pref.summary = newValue.toString()
         } else {
             val text = newValue.toString()
