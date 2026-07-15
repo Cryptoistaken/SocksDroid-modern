@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -62,6 +63,7 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     init {
+        Log.d("KiloProxyVM", "VpnViewModel init - instance ${hashCode()}")
         val app = getApplication<Application>()
         bindToService(app)
         loadProfiles(app)
@@ -82,9 +84,12 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
         try {
             val pm = ProfileManager.getInstance(context)
             pm.reload()
+            val allProfiles = pm.getProfiles().toList()
             // Skip first element (default placeholder), return only user-created profiles
-            _profiles.value = pm.getProfiles().toList().drop(1)
-        } catch (_: Exception) {
+            _profiles.value = allProfiles.drop(1)
+            Log.d("KiloProxyVM", "loadProfiles: ${allProfiles.size} total, ${allProfiles.drop(1).size} user profiles")
+        } catch (e: Exception) {
+            Log.e("KiloProxyVM", "loadProfiles failed: ${e.message}")
             _profiles.value = emptyList()
         }
     }
@@ -144,27 +149,36 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun startVpn(context: Context, profileName: String) {
+        Log.d("KiloProxyVM", "startVpn called for profile: $profileName")
         viewModelScope.launch {
             try {
                 val pm = ProfileManager.getInstance(context)
-                val profile = pm.getProfile(profileName) ?: return@launch
+                val profile = pm.getProfile(profileName) ?: run {
+                    Log.e("KiloProxyVM", "startVpn: profile not found: $profileName")
+                    return@launch
+                }
                 Utility.startVpn(context, profile)
                 _activeProfileName.value = profileName
                 pm.switchDefault(profileName)
-            } catch (_: Exception) {
-                // Ignore
+                Log.d("KiloProxyVM", "startVpn succeeded for: $profileName")
+            } catch (e: Exception) {
+                Log.e("KiloProxyVM", "startVpn failed: ${e.message}")
             }
         }
     }
 
     fun stopVpn(context: Context) {
+        Log.d("KiloProxyVM", "stopVpn called")
         viewModelScope.launch {
             if (bound && vpnService != null) {
                 try {
                     vpnService!!.stop()
-                } catch (_: Exception) {
-                    // Service unreachable
+                    Log.d("KiloProxyVM", "stopVpn succeeded")
+                } catch (e: Exception) {
+                    Log.e("KiloProxyVM", "stopVpn failed: ${e.message}")
                 }
+            } else {
+                Log.w("KiloProxyVM", "stopVpn: service not bound")
             }
         }
     }

@@ -1,5 +1,6 @@
 package net.typeblog.socks.ui.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Language
@@ -12,7 +13,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +25,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import net.typeblog.socks.ui.screens.ProxiesScreen
+import net.typeblog.socks.ui.screens.StatusScreen
+import net.typeblog.socks.ui.screens.SettingsScreen
+import net.typeblog.socks.ui.screens.SplitTunnelingScreen
 
 sealed class Screen(val route: String) {
     data object Proxies : Screen("proxies")
@@ -113,75 +117,25 @@ fun AppNavigation() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Proxies.route) {
-                ProxiesScreenPlaceholder()
+                Log.d("KiloProxyNav", "Navigated to ProxiesScreen")
+                ProxiesScreen()
             }
             composable(Screen.Status.route) {
-                StatusScreenPlaceholder()
+                Log.d("KiloProxyNav", "Navigated to StatusScreen")
+                StatusScreen()
             }
             composable(Screen.Settings.route) {
-                SettingsScreenPlaceholder(onNavigateToSplitTunneling = {
+                Log.d("KiloProxyNav", "Navigated to SettingsScreen")
+                SettingsScreen(onNavigateToSplitTunneling = {
                     navController.navigate(Screen.SplitTunneling.route)
                 })
             }
             composable(Screen.SplitTunneling.route) {
-                SplitTunnelingScreenPlaceholder(onBack = {
+                Log.d("KiloProxyNav", "Navigated to SplitTunnelingScreen")
+                SplitTunnelingScreen(onNavigateBack = {
                     navController.popBackStack()
                 })
             }
         }
-    }
-}
-
-// Placeholder screens — will be replaced by Agent 2 and Agent 3
-
-@Composable
-private fun ProxiesScreenPlaceholder() {
-    Surface(
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        Text(
-            text = "Proxies",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(16.dp)
-        )
-    }
-}
-
-@Composable
-private fun StatusScreenPlaceholder() {
-    Surface(
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        Text(
-            text = "Status",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(16.dp)
-        )
-    }
-}
-
-@Composable
-private fun SettingsScreenPlaceholder(onNavigateToSplitTunneling: () -> Unit) {
-    Surface(
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(16.dp)
-        )
-    }
-}
-
-@Composable
-private fun SplitTunnelingScreenPlaceholder(onBack: () -> Unit) {
-    Surface(
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        Text(
-            text = "Split Tunneling",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(16.dp)
-        )
     }
 }

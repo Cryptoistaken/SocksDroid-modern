@@ -1,5 +1,6 @@
 package net.typeblog.socks.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,10 +62,13 @@ fun ProxiesScreen(
     modifier: Modifier = Modifier,
     viewModel: VpnViewModel = viewModel()
 ) {
+    Log.d("KiloProxyScreen", "ProxiesScreen composed")
     val context = LocalContext.current
     val profiles by viewModel.profiles.collectAsState()
     val isRunning by viewModel.isRunning.collectAsState()
     val activeProfileName by viewModel.activeProfileName.collectAsState()
+
+    Log.d("KiloProxyScreen", "ProxiesScreen profiles=${profiles.size}, isRunning=$isRunning")
 
     var showAddSheet by remember { mutableStateOf(false) }
     var selectedProfile by remember { mutableStateOf<String?>(null) }

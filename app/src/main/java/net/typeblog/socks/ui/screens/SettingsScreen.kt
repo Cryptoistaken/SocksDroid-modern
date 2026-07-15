@@ -1,5 +1,6 @@
 package net.typeblog.socks.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -67,6 +68,7 @@ fun SettingsScreen(
     onNavigateToSplitTunneling: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    Log.d("KiloProxyScreen", "SettingsScreen composed")
     val context = LocalContext.current
     val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 

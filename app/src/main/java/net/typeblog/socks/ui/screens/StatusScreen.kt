@@ -1,5 +1,6 @@
 package net.typeblog.socks.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ fun StatusScreen(
     modifier: Modifier = Modifier,
     viewModel: VpnViewModel = viewModel()
 ) {
+    Log.d("KiloProxyScreen", "StatusScreen composed")
     val context = LocalContext.current
     val isRunning by viewModel.isRunning.collectAsState()
     val currentIp by viewModel.currentIp.collectAsState()
@@ -43,6 +45,8 @@ fun StatusScreen(
     val connectedSince by viewModel.connectedSince.collectAsState()
     val profiles by viewModel.profiles.collectAsState()
     val activeProfileName by viewModel.activeProfileName.collectAsState()
+
+    Log.d("KiloProxyScreen", "StatusScreen isRunning=$isRunning profiles=${profiles.size}")
 
     // Determine server name from active profile or default
     val serverName = remember(activeProfileName, profiles) {
