@@ -83,12 +83,6 @@ class SocksVpnService : VpnService() {
             }
         }
     }
-    private val mNotificationUpdater = object : Runnable {
-        override fun run() {
-            updateNotification()
-            mIpCheckHandler.postDelayed(this, 1000)
-        }
-    }
     private val mIpCheckRunnable = object : Runnable {
         override fun run() {
             Thread {
@@ -97,6 +91,7 @@ class SocksVpnService : VpnService() {
                     if (info != null) {
                         mCurrentIp = info.ip
                         mCountryCode = info.countryCode
+                        updateNotification()
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "IP check failed", e)
@@ -173,7 +168,6 @@ class SocksVpnService : VpnService() {
         if (mRunning) {
             mConnectedSince = java.lang.System.currentTimeMillis()
             mIpCheckHandler.post(mIpCheckRunnable)
-            mIpCheckHandler.post(mNotificationUpdater)
 
             val prefs = PreferenceManager.getDefaultSharedPreferences(this)
             if (prefs.getBoolean(PREF_AUTO_STOP, false)) {
@@ -225,7 +219,6 @@ class SocksVpnService : VpnService() {
         mRunning = false
 
         mIpCheckHandler.removeCallbacks(mIpCheckRunnable)
-        mIpCheckHandler.removeCallbacks(mNotificationUpdater)
 
         try {
             unregisterReceiver(mNotificationActionReceiver)
@@ -255,7 +248,7 @@ class SocksVpnService : VpnService() {
 
         val notification = builder
             .setContentTitle(getString(R.string.notify_title))
-            .setContentText(formatElapsed())
+            .setContentText(getString(R.string.notify_msg, mProfileName ?: ""))
             .setSmallIcon(R.drawable.ic_launcher)
             .addAction(android.R.drawable.ic_media_pause, "Stop", stopPendingIntent)
             .build()
@@ -290,7 +283,7 @@ class SocksVpnService : VpnService() {
 
         val notification = builder
             .setContentTitle(getString(R.string.notify_title))
-            .setContentText("$ipText  |  ${formatElapsed()}")
+            .setContentText(ipText)
             .setSmallIcon(R.drawable.ic_launcher)
             .setOngoing(true)
             .addAction(android.R.drawable.ic_media_pause, "Stop", stopPendingIntent)
@@ -298,20 +291,6 @@ class SocksVpnService : VpnService() {
 
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(1, notification)
-    }
-
-    private fun formatElapsed(): String {
-        if (mConnectedSince <= 0L) return getString(R.string.notify_msg, mProfileName ?: "")
-        val diff = java.lang.System.currentTimeMillis() - mConnectedSince
-        val totalSeconds = diff / 1000
-        val hours = totalSeconds / 3600
-        val minutes = (totalSeconds % 3600) / 60
-        val seconds = totalSeconds % 60
-        return when {
-            hours > 0 -> String.format("%dh %02dm %02ds", hours, minutes, seconds)
-            minutes > 0 -> String.format("%dm %02ds", minutes, seconds)
-            else -> String.format("%ds", seconds)
-        }
     }
 
     private fun configure(name: String?, route: String?, perApp: Boolean, bypass: Boolean, apps: Array<String>?, ipv6: Boolean) {
