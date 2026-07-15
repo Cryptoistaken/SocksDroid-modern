@@ -71,6 +71,7 @@ class SocksVpnService : VpnService() {
     private var mRunning = false
     private val mBinder: IBinder = VpnBinder()
     private var mProfileName: String? = null
+    private var mTun2socksProcess: java.lang.Process? = null
 
     private var mCurrentIp: String? = null
     private var mCountryCode: String? = null
@@ -221,6 +222,16 @@ class SocksVpnService : VpnService() {
 
         val dir = filesDir.absolutePath
 
+        // Kill tun2socks: destroy Process handle or fall back to pid file
+        mTun2socksProcess?.let { p ->
+            try {
+                p.destroy()
+                Log.d(TAG, "tun2socks process destroyed")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error destroying tun2socks process: ${e.message}")
+            }
+            mTun2socksProcess = null
+        }
         Utility.killPidFile("$dir/tun2socks.pid")
         Utility.killPidFile("$dir/pdnsd.pid")
 
@@ -388,8 +399,7 @@ class SocksVpnService : VpnService() {
             "--socks-server-addr", "$server:$port",
             "--tunfd", fd.toString(),
             "--tunmtu", "1500",
-            "--loglevel", "3",
-            "--pid", "$dir/tun2socks.pid"
+            "--loglevel", "3"
         )
 
         if (!user.isNullOrEmpty()) {
@@ -415,10 +425,38 @@ class SocksVpnService : VpnService() {
         }
 
         Log.d(TAG, "tun2socks full command: ${command.joinToString(" ")}")
-        val execResult = Utility.exec(command.toTypedArray())
-        Log.d(TAG, "tun2socks exec returned: $execResult")
-        if (execResult != 0) {
-            stopMe("tun2socks_exec_failed:$execResult")
+        
+        // Start tun2socks non-blocking (no daemonization). Store process for later cleanup.
+        try {
+            val pb = ProcessBuilder(command)
+            pb.redirectErrorStream(true)
+            val process = pb.start()
+            mTun2socksProcess = process
+            Log.d(TAG, "tun2socks process started with PID awareness")
+            
+            // Consume stdout/stderr on a background thread to prevent buffer deadlock
+            Thread {
+                try {
+                    val reader = java.io.BufferedReader(java.io.InputStreamReader(process.inputStream))
+                    var line = reader.readLine()
+                    while (line != null) {
+                        Log.d(TAG, "tun2socks: $line")
+                        line = reader.readLine()
+                    }
+                    val exitCode = process.waitFor()
+                    Log.d(TAG, "tun2socks process exited with: $exitCode")
+                    if (exitCode != 0 && mRunning) {
+                        Log.e(TAG, "tun2socks exited unexpectedly with code $exitCode")
+                        // Only stop if we haven't already initiated shutdown
+                        runOnMainThread { stopMe("tun2socks_exited:$exitCode") }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "tun2socks monitor error: ${e.message}")
+                }
+            }.apply { isDaemon = true }.start()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start tun2socks process", e)
+            stopMe("tun2socks_start_failed:${e.message}")
             return
         }
 
@@ -441,6 +479,10 @@ class SocksVpnService : VpnService() {
 
         Log.e(TAG, "sendfd failed after 5 attempts, stopping VPN")
         stopMe("sendfd_failed_5_attempts")
+    }
+
+    private fun runOnMainThread(action: () -> Unit) {
+        Handler(Looper.getMainLooper()).post(action)
     }
 
     companion object {
