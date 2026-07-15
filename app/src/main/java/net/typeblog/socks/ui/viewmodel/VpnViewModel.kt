@@ -138,7 +138,7 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
                 } else {
                     clearState()
                 }
-                delay(1000L)
+                delay(500L)
             }
         }
     }
@@ -193,10 +193,12 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
     fun prepareAndStartVpn(context: Context, profileName: String): Intent? {
         val intent = VpnService.prepare(context)
         if (intent == null) {
-            // Permission already granted — start directly
+            // Optimistically set active profile before VPN starts
+            _activeProfileName.value = profileName
             startVpn(context, profileName)
             return null
         }
+        // Store pending even if permission needed
         _pendingProfile.value = profileName
         return intent
     }
@@ -208,6 +210,7 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
     fun onVpnPermissionResult(context: Context) {
         val profile = _pendingProfile.value ?: return
         _pendingProfile.value = null
+        _activeProfileName.value = profile // immediate feedback
         startVpn(context, profile)
     }
 

@@ -51,7 +51,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import net.typeblog.socks.ui.components.ProxyCard
 import net.typeblog.socks.ui.components.VpnButton
@@ -62,7 +61,7 @@ import net.typeblog.socks.util.ProfileManager
 @Composable
 fun ProxiesScreen(
     modifier: Modifier = Modifier,
-    viewModel: VpnViewModel = viewModel()
+    viewModel: VpnViewModel
 ) {
     Log.d("KiloProxyScreen", "ProxiesScreen composed")
     val context = LocalContext.current

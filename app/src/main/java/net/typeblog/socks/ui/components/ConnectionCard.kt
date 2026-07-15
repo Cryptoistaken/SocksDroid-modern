@@ -73,13 +73,13 @@ fun ConnectionCard(
     }
 
     val shieldColor = if (isConnected) {
-        MaterialTheme.colorScheme.tertiary
+        MaterialTheme.colorScheme.onSurface
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
     }
 
     val shieldBackground = if (isConnected) {
-        MaterialTheme.colorScheme.tertiaryContainer
+        MaterialTheme.colorScheme.surfaceContainerHigh
     } else {
         MaterialTheme.colorScheme.surfaceContainerHighest
     }
@@ -129,12 +129,12 @@ fun ConnectionCard(
 
             // Badge
             val badgeBackground = if (isConnected) {
-                MaterialTheme.colorScheme.tertiaryContainer
+                MaterialTheme.colorScheme.surfaceVariant
             } else {
                 MaterialTheme.colorScheme.surfaceContainerHighest
             }
             val badgeColor = if (isConnected) {
-                MaterialTheme.colorScheme.tertiary
+                MaterialTheme.colorScheme.onSurface
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
             }
@@ -167,7 +167,7 @@ fun ConnectionCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Info grid
-            val infoBackground = MaterialTheme.colorScheme.surfaceTint
+            val infoBackground = MaterialTheme.colorScheme.surfaceVariant
 
             // Your IP row
             InfoRow(

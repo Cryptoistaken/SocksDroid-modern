@@ -29,7 +29,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import net.typeblog.socks.R
 import net.typeblog.socks.ui.components.ConnectionCard
 import net.typeblog.socks.ui.components.VpnButton
@@ -39,7 +38,7 @@ import net.typeblog.socks.util.ProfileManager
 @Composable
 fun StatusScreen(
     modifier: Modifier = Modifier,
-    viewModel: VpnViewModel = viewModel()
+    viewModel: VpnViewModel
 ) {
     Log.d("KiloProxyScreen", "StatusScreen composed")
     val context = LocalContext.current

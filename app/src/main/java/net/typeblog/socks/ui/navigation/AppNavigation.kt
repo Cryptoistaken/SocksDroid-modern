@@ -25,10 +25,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.compose.viewModel
 import net.typeblog.socks.ui.screens.ProxiesScreen
 import net.typeblog.socks.ui.screens.StatusScreen
 import net.typeblog.socks.ui.screens.SettingsScreen
 import net.typeblog.socks.ui.screens.SplitTunnelingScreen
+import net.typeblog.socks.ui.viewmodel.VpnViewModel
 
 sealed class Screen(val route: String) {
     data object Proxies : Screen("proxies")
@@ -57,6 +59,7 @@ fun AppNavigation() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val showBottomBar = currentDestination?.route in bottomNavRoutes
+    val vpnViewModel: VpnViewModel = viewModel()
 
     Scaffold(
         bottomBar = {
@@ -118,11 +121,11 @@ fun AppNavigation() {
         ) {
             composable(Screen.Proxies.route) {
                 Log.d("KiloProxyNav", "Navigated to ProxiesScreen")
-                ProxiesScreen()
+                ProxiesScreen(viewModel = vpnViewModel)
             }
             composable(Screen.Status.route) {
                 Log.d("KiloProxyNav", "Navigated to StatusScreen")
-                StatusScreen()
+                StatusScreen(viewModel = vpnViewModel)
             }
             composable(Screen.Settings.route) {
                 Log.d("KiloProxyNav", "Navigated to SettingsScreen")
