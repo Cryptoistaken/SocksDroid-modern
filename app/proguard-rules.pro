@@ -28,3 +28,7 @@
 
 # Keep AndroidX Preference classes (used via dynamic casts in PreferenceFragmentCompat)
 -keep class androidx.preference.** { *; }
+
+# R8: Kotlin coroutines internals (SpillingKt referenced by suspend lambdas)
+-keep class kotlin.coroutines.jvm.internal.** { *; }
+-dontwarn kotlin.coroutines.jvm.internal.**
