@@ -399,8 +399,7 @@ class SocksVpnService : VpnService() {
             "--socks-server-addr", "$server:$port",
             "--tunfd", fd.toString(),
             "--tunmtu", "1500",
-            "--loglevel", "3",
-            "--pid", "$dir/tun2socks.pid"
+            "--loglevel", "3"
         )
 
         if (!user.isNullOrEmpty()) {
@@ -425,7 +424,7 @@ class SocksVpnService : VpnService() {
 
         Log.d(TAG, "tun2socks full command: ${command.joinToString(" ")}")
         
-        // Start tun2socks non-blocking. --pid will daemonize; Process handle covers the parent which exits quickly. Store for later cleanup.
+        // Start tun2socks non-blocking (no daemonization). Store Process for later cleanup.
         try {
             val pb = ProcessBuilder(command)
             pb.redirectErrorStream(true)
