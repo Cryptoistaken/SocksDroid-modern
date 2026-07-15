@@ -1,5 +1,7 @@
 package net.typeblog.socks.ui.screens
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,10 +18,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import net.typeblog.socks.R
 import net.typeblog.socks.ui.components.ConnectionCard
 import net.typeblog.socks.ui.components.VpnButton
 import net.typeblog.socks.ui.viewmodel.VpnViewModel
@@ -60,6 +65,24 @@ fun StatusScreen(
             .padding(horizontal = 16.dp)
             .padding(top = 8.dp)
     ) {
+        // KiloProxy logo – theme-aware (dark logo on light bg, white logo on dark bg)
+        val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+        val logoSrc = if (isDarkTheme) R.drawable.logo_dark else R.drawable.logo_light
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = logoSrc),
+                contentDescription = "KiloProxy",
+                modifier = Modifier.height(72.dp),
+                contentScale = ContentScale.Fit
+            )
+        }
+
         // Connection status card
         ConnectionCard(
             isConnected = isRunning,
