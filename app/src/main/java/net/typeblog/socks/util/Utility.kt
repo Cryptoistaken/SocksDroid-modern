@@ -66,18 +66,27 @@ object Utility {
             Log.d(TAG, "Executing: ${cmd.contentToString()}")
             val p = Runtime.getRuntime().exec(cmd)
 
-            val br = java.io.BufferedReader(java.io.InputStreamReader(p.errorStream))
-            var line = br.readLine()
-            while (line != null) {
-                Log.e(TAG, "STDERR: $line")
-                line = br.readLine()
+            // Read stdout
+            val stdoutBr = java.io.BufferedReader(java.io.InputStreamReader(p.inputStream))
+            var stdoutLine = stdoutBr.readLine()
+            while (stdoutLine != null) {
+                Log.d(TAG, "STDOUT: $stdoutLine")
+                stdoutLine = stdoutBr.readLine()
+            }
+
+            // Read stderr
+            val stderrBr = java.io.BufferedReader(java.io.InputStreamReader(p.errorStream))
+            var stderrLine = stderrBr.readLine()
+            while (stderrLine != null) {
+                Log.e(TAG, "STDERR: $stderrLine")
+                stderrLine = stderrBr.readLine()
             }
 
             val ret = p.waitFor()
-            Log.d(TAG, "Process exited with: $ret")
+            Log.d(TAG, "Process '${cmd.firstOrNull() ?: "?"}' exited with: $ret")
             ret
         } catch (e: Exception) {
-            Log.e(TAG, "exec failed", e)
+            Log.e(TAG, "exec failed for cmd: ${cmd.contentToString()}", e)
             -1
         }
     }

@@ -50,7 +50,8 @@ class SocksVpnService : VpnService() {
         }
 
         override fun stop() {
-            stopMe()
+            Log.d(TAG, "stop() called via AIDL binder")
+            stopMe("binder_stop")
         }
 
         override fun getCurrentIp(): String {
@@ -79,7 +80,7 @@ class SocksVpnService : VpnService() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == Intent.ACTION_SCREEN_OFF) {
                 Log.d(TAG, "Screen off received, auto-stopping VPN")
-                stopMe()
+                stopMe("screen_off")
             }
         }
     }
@@ -104,7 +105,10 @@ class SocksVpnService : VpnService() {
     private val mNotificationActionReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
-                ACTION_STOP_VPN -> stopMe()
+                ACTION_STOP_VPN -> {
+                    Log.d(TAG, "Notification stop action received")
+                    stopMe("notification_stop")
+                }
             }
         }
     }
@@ -150,6 +154,8 @@ class SocksVpnService : VpnService() {
         val ipv6 = intent.getBooleanExtra(INTENT_IPV6_PROXY, false)
         val udpgw = intent.getStringExtra(INTENT_UDP_GW)
 
+        Log.d(TAG, "onStartCommand: profile=$mProfileName server=$server:$port user=$username route=$route dns=$dns:$dnsPort perApp=$perApp ipv6=$ipv6 udpgw=$udpgw")
+
         createNotificationChannel()
 
         showNotification()
@@ -162,8 +168,13 @@ class SocksVpnService : VpnService() {
         if (DEBUG)
             Log.d(TAG, "fd: ${mInterface?.fd}")
 
-        if (mInterface != null)
+        if (mInterface != null) {
+            Log.d(TAG, "mInterface is non-null with fd=${mInterface!!.fd}, calling start()")
             start(mInterface!!.fd, server, port, username, passwd, dns, dnsPort, ipv6, udpgw)
+        } else {
+            Log.e(TAG, "mInterface is NULL after configure() — VPN establish() returned null!")
+            stopMe("interface_null")
+        }
 
         if (mRunning) {
             mConnectedSince = java.lang.System.currentTimeMillis()
@@ -180,8 +191,9 @@ class SocksVpnService : VpnService() {
     }
 
     override fun onRevoke() {
+        Log.d(TAG, "onRevoke called - VPN permission revoked")
         super.onRevoke()
-        stopMe()
+        stopMe("vpn_revoked")
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -194,11 +206,17 @@ class SocksVpnService : VpnService() {
     }
 
     override fun onDestroy() {
+        Log.d(TAG, "onDestroy called")
         super.onDestroy()
-        stopMe()
+        stopMe("on_destroy")
     }
 
-    private fun stopMe() {
+    private fun stopMe(reason: String = "") {
+        Log.d(TAG, "stopMe called" + if (reason.isNotEmpty()) " - reason: $reason" else "")
+        if (reason.isEmpty()) {
+            // Log stack trace when no reason is given to identify caller
+            Log.d(TAG, "stopMe stack trace:", Throwable("stopMe caller trace"))
+        }
         stopForeground(true)
 
         val dir = filesDir.absolutePath
@@ -343,6 +361,11 @@ class SocksVpnService : VpnService() {
         }
 
         mInterface = b.establish()
+        if (mInterface == null) {
+            Log.e(TAG, "VpnService.Builder.establish() returned null")
+        } else {
+            Log.d(TAG, "VpnService established with fd=${mInterface!!.fd}")
+        }
     }
 
     private fun start(fd: Int, server: String?, port: Int, user: String?, passwd: String?, dns: String?, dnsPort: Int, ipv6: Boolean, udpgw: String?) {
@@ -351,11 +374,12 @@ class SocksVpnService : VpnService() {
         val libDir = applicationInfo.nativeLibraryDir
         val dir = filesDir.absolutePath
 
-        Utility.exec(arrayOf(
+        val pdnsdResult = Utility.exec(arrayOf(
             "$libDir/libpdnsd.so",
             "-c",
             "$dir/pdnsd.conf"
         ))
+        Log.d(TAG, "pdnsd exec returned: $pdnsdResult")
 
         val command = mutableListOf(
             "$libDir/libtun2socks.so",
@@ -390,18 +414,20 @@ class SocksVpnService : VpnService() {
             command.add(udpgw)
         }
 
-        if (DEBUG) {
-            Log.d(TAG, command.toString())
-        }
-
-        if (Utility.exec(command.toTypedArray()) != 0) {
-            stopMe()
+        Log.d(TAG, "tun2socks full command: ${command.joinToString(" ")}")
+        val execResult = Utility.exec(command.toTypedArray())
+        Log.d(TAG, "tun2socks exec returned: $execResult")
+        if (execResult != 0) {
+            stopMe("tun2socks_exec_failed:$execResult")
             return
         }
 
         var i = 0
         while (i < 5) {
-            if (System.sendfd(fd) != -1) {
+            val sendResult = System.sendfd(fd)
+            Log.d(TAG, "sendfd attempt ${i + 1}/5 returned: $sendResult")
+            if (sendResult != -1) {
+                Log.d(TAG, "sendfd succeeded on attempt ${i + 1}")
                 mRunning = true
                 return
             }
@@ -413,7 +439,8 @@ class SocksVpnService : VpnService() {
             }
         }
 
-        stopMe()
+        Log.e(TAG, "sendfd failed after 5 attempts, stopping VPN")
+        stopMe("sendfd_failed_5_attempts")
     }
 
     companion object {

@@ -2,1592 +2,676 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>KiloProxy — Design Mockup</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* ── Reset & Base ── */
-  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-  html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-  body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: #e8e8ec;
-    display: flex; align-items: center; justify-content: center;
-    min-height: 100vh;
-    padding: 20px;
-    overflow-x: hidden;
-  }
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  --primary:#2563EB;--on-primary:#fff;--surface:#FAFAFA;--surface-variant:#fff;
+  --surface-tint:#F5F5F5;--outline:#E5E5E5;--outline-variant:#EEE;
+  --on-surface:#111;--on-surface-variant:#666;--tertiary:#16A34A;--error:#DC2626;
+  --surface-container-low:#fff;--surface-container-high:#F5F5F5;--bg:#F0F0F0;
+  --card-radius:12px;
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--on-surface);display:flex;flex-direction:column;
+  align-items:center;padding:24px 16px;min-height:100vh;
+  transition:background .2s,color .2s;
+}
+body.dark{
+  --primary:#3B82F6;--on-primary:#fff;--surface:#000;--surface-variant:#0A0A0A;
+  --surface-tint:#111;--outline:#222;--outline-variant:#1A1A1A;
+  --on-surface:#fff;--on-surface-variant:#888;--tertiary:#22C55E;--error:#EF4444;
+  --surface-container-low:#0A0A0A;--surface-container-high:#111;--bg:#050505;
+}
+body.dark .form-input{background:#1A1A1A;color:#fff}
+body.dark .form-input::placeholder{color:#555}
+body.dark .switch-track{background:#444}
 
-  /* ── Phone Frame ── */
-  .phone-frame-wrap {
-    width: 390px; height: 844px;
-    flex-shrink: 0;
-  }
-  .phone-frame {
-    width: 390px; height: 844px;
-    background: #000;
-    border-radius: 44px;
-    overflow: hidden;
-    position: relative;
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,0.06),
-      0 20px 60px rgba(0,0,0,0.6),
-      0 0 0 1px rgba(0,0,0,0.3);
-    display: flex; flex-direction: column;
-    transition: background 0.3s ease;
-    transform-origin: center center;
-  }
-  @media (max-height: 900px), (max-width: 430px) {
-    .phone-frame-wrap { display: flex; align-items: center; justify-content: center; }
-    .phone-frame {
-      transform: scale(min(calc((100vw - 32px) / 390), calc((100vh - 32px) / 844)));
-    }
-  }
+h1{font-size:18px;font-weight:700;margin-bottom:20px;text-align:center}
 
-  /* ── Theme Variables ── */
-  .theme-light {
-    --bg: #fafafa;
-    --bg-card: #fff;
-    --bg-elevated: #f5f5f5;
-    --bg-surface: #fff;
-    --border: #e5e5e5;
-    --border-light: #eee;
-    --text: #111;
-    --text-secondary: #666;
-    --text-tertiary: #707070;
-    --accent: #2563eb;
-    --accent-hover: #1d4ed8;
-    --accent-subtle: rgba(37,99,235,0.08);
-    --green: #16a34a;
-    --green-bg: rgba(22,163,74,0.1);
-    --green-text: #16a34a;
-    --blue: #2563eb;
-    --blue-bg: rgba(37,99,235,0.1);
-    --gray: #999;
-    --gray-bg: rgba(0,0,0,0.05);
-    --red: #dc2626;
-    --red-bg: rgba(220,38,38,0.1);
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
-    --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
-    --toggle-bg: #d4d4d4;
-    --toggle-active: #2563eb;
-    --overlay-bg: rgba(0,0,0,0.3);
-    --icon-color: #666;
-    --fab-shadow: 0 4px 16px rgba(37,99,235,0.3);
-    --scrollbar-thumb: #d4d4d4;
+.device-frame{
+  width:380px;background:var(--surface);border:1px solid var(--outline);
+  border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.1);
+  position:relative;display:flex;flex-direction:column;max-height:720px;
+}
 
-  }
-  .theme-dark {
-    --bg: #000;
-    --bg-card: #0a0a0a;
-    --bg-elevated: #111;
-    --bg-surface: #0d0d0d;
-    --border: #222;
-    --border-light: #1a1a1a;
-    --text: #fff;
-    --text-secondary: #888;
-    --text-tertiary: #555;
-    --accent: #3b82f6;
-    --accent-hover: #2563eb;
-    --accent-subtle: rgba(59,130,246,0.1);
-    --green: #22c55e;
-    --green-bg: rgba(34,197,94,0.12);
-    --green-text: #22c55e;
-    --blue: #3b82f6;
-    --blue-bg: rgba(59,130,246,0.12);
-    --gray: #555;
-    --gray-bg: rgba(85,85,85,0.15);
-    --red: #ef4444;
-    --red-bg: rgba(239,68,68,0.12);
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
-    --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
-    --toggle-bg: #222;
-    --toggle-active: #3b82f6;
-    --overlay-bg: rgba(0,0,0,0.7);
-    --icon-color: #888;
-    --fab-shadow: 0 4px 16px rgba(59,130,246,0.35);
-    --scrollbar-thumb: #222;
+.notch{height:32px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--outline)}
+.notch-dot{width:120px;height:6px;background:var(--outline);border-radius:999px}
 
-  }
-  .phone-frame { background: var(--bg); }
+/* Tabs */
+.tab-bar{display:flex;border-top:1px solid var(--outline);background:var(--surface-container-low);flex-shrink:0}
+.tab-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:8px 0 10px;cursor:pointer;border:none;background:transparent;
+  color:var(--on-surface-variant);font-size:10px;font-weight:600;
+  transition:color .15s;position:relative;
+}
+.tab-btn svg{width:22px;height:22px;fill:currentColor}
+.tab-btn.active{color:var(--primary)}
+.tab-btn.active::after{
+  content:'';position:absolute;top:0;left:20%;width:60%;height:3px;
+  background:var(--primary);border-radius:0 0 3px 3px;
+}
 
-  /* ── App Content ── */
-  .app-content {
-    flex: 1; display: flex; flex-direction: column;
-    overflow: hidden; position: relative;
-  }
+/* Pages */
+.page{display:none;padding:12px 14px;flex:1;overflow-y:auto}
+.page.active{display:block}
 
-  /* ── Status Bar ── */
-  .status-bar {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 24px 8px;
-    font-size: 12px; font-weight: 600;
-    color: var(--text-secondary);
-    flex-shrink: 0;
-  }
-  .status-bar .time { color: var(--text); }
-  .status-icons { display: flex; gap: 5px; align-items: center; }
-  .status-icons svg { width: 14px; height: 14px; fill: none; stroke: var(--text); stroke-width: 1.5; }
+/* Status page */
+.logo-row{display:flex;align-items:center;gap:10px;padding:8px 0 12px}
+.logo-icon{width:32px;height:32px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--on-primary);font-weight:800;font-size:16px}
+.logo-row h2{font-size:18px;font-weight:700}
 
-  /* ── Top Bar ── */
-  .top-bar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 4px 16px 8px; flex-shrink: 0;
-  }
-  .top-bar-left {
-    display: flex; align-items: center; gap: 10px;
-  }
-  .brand-name {
-    font-size: 18px; font-weight: 700; color: var(--text);
-    letter-spacing: -0.03em;
-  }
+.connection-card{
+  border:1px solid var(--outline);border-radius:var(--card-radius);
+  background:var(--surface-container-low);padding:20px;display:flex;
+  flex-direction:column;align-items:center;
+}
+.shield-circle{
+  width:56px;height:56px;border-radius:50%;background:var(--surface-container-high);
+  display:flex;align-items:center;justify-content:center;transition:.2s;
+}
+.shield-circle svg{width:28px;height:28px}
+.shield-circle.connected svg{color:var(--on-surface)}
+.shield-circle.disconnected svg{color:var(--on-surface-variant);opacity:.4}
 
-  /* ── Tab Content ── */
-  .tab-content { flex: 1; overflow: hidden; position: relative; }
-  .tab-pane {
-    position: absolute; inset: 0;
-    overflow-y: auto; overflow-x: hidden;
-    padding: 8px 16px 16px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.25, 0.1, 0.25, 1);
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb) transparent;
-    transform: translateY(6px);
-  }
-  .tab-pane::-webkit-scrollbar { width: 4px; }
-  .tab-pane::-webkit-scrollbar-track { background: transparent; }
-  .tab-pane::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
-  .tab-pane.from-right { transform: translateX(16px); }
-  .tab-pane.from-left { transform: translateX(-16px); }
-  .tab-pane.active {
-    opacity: 1; transform: translateX(0) translateY(0);
-    pointer-events: auto;
-  }
+.badge{
+  display:flex;align-items:center;gap:6px;border-radius:999px;
+  padding:6px 14px;margin-top:12px;font-size:12px;font-weight:600;
+}
+.badge-dot{width:8px;height:8px;border-radius:50%}
+.badge.connected{background:var(--surface-container-high);color:var(--on-surface)}
+.badge.connected .badge-dot{background:var(--on-surface)}
+.badge.disconnected{background:var(--surface-container-high);color:var(--on-surface-variant)}
+.badge.disconnected .badge-dot{background:var(--on-surface-variant)}
 
-  /* ── Bottom Tab Bar ── */
-  .tab-bar {
-    display: flex; flex-shrink: 0;
-    border-top: 1px solid var(--border);
-    background: var(--bg-card);
-    padding: 4px 0; padding-bottom: 20px;
-  }
-  .tab-item {
-    flex: 1; display: flex; flex-direction: column; align-items: center;
-    gap: 2px; padding: 6px 0 4px;
-    background: none; border: none; cursor: pointer;
-    color: var(--text-tertiary);
-    font-size: 10px; font-weight: 500;
-    transition: color 0.15s;
-    position: relative;
-  }
-  .tab-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.5; }
-  .tab-item.active { color: var(--accent); }
-  .tab-item:hover:not(.active) { color: var(--text-secondary); }
-  .tab-item .tab-indicator {
-    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-    width: 20px; height: 2px; border-radius: 0 0 2px 2px;
-    background: var(--accent);
-    opacity: 0; transition: opacity 0.15s;
-  }
-  .tab-item.active .tab-indicator { opacity: 1; }
+.info-rows{width:100%;margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.info-row{
+  display:flex;justify-content:space-between;align-items:center;
+  background:var(--surface-container-high);border-radius:8px;padding:8px 12px;
+}
+.info-label{font-size:12px;color:var(--on-surface-variant);font-weight:500}
+.info-value{font-size:12px;font-weight:600}
+.info-value.ip{font-size:15px;font-weight:700}
 
-  /* ── Proxy Card ── */
-  .proxy-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .proxy-card:hover {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 1px rgba(59,130,246,0.15);
-    transform: translateY(-1px);
-  }
-  .proxy-card:last-child { margin-bottom: 0; }
-  .proxy-status-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    flex-shrink: 0;
-    background: var(--gray);
-    transition: background 0.3s;
-  }
-  .proxy-status-dot.connected { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
-  .proxy-card-body { flex: 1; min-width: 0; }
-  .proxy-card-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
-  .proxy-card-addr { font-size: 12px; color: var(--text-secondary); font-weight: 400; }
-  .proxy-card-protocol {
-    font-size: 10px; font-weight: 600;
-    padding: 3px 8px; border-radius: 9999px;
-    background: var(--accent-subtle);
-    color: var(--accent);
-    flex-shrink: 0;
-  }
+.round-btn{
+  width:64px;height:64px;border-radius:50%;border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;margin-top:20px;transition:transform .1s,box-shadow .15s;
+}
+.round-btn:active{transform:scale(.93)}
+.round-btn svg{width:32px;height:32px;fill:white}
+.round-btn.start{background:var(--primary)}
+.round-btn.stop{background:var(--error)}
 
-  /* ── FAB ── */
-  .fab {
-    position: absolute; bottom: 16px; right: 16px;
-    width: 52px; height: 52px; border-radius: 50%;
-    background: var(--accent);
-    border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: var(--fab-shadow);
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s, opacity 0.2s ease;
-    color: #fff; z-index: 10;
-    opacity: 1;
-  }
-  .fab.fab-hidden { opacity: 0; transform: scale(0.7); pointer-events: none; }
-  .fab:hover { transform: scale(1.05); background: var(--accent-hover); }
-  .fab:active { transform: scale(0.95); }
-  .fab svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* Proxies page */
+#page-proxies{position:relative}
+.proxy-list{display:flex;flex-direction:column;gap:10px;padding-bottom:72px}
+.proxy-card{
+  display:flex;align-items:center;gap:12px;border:1px solid var(--outline);
+  border-radius:10px;background:var(--surface-container-low);padding:14px;
+  cursor:pointer;transition:background .1s;
+}
+.proxy-card:active{background:var(--surface-container-high)}
+.proxy-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.proxy-dot.on{background:var(--tertiary)}
+.proxy-dot.off{background:#999}
+.proxy-info{flex:1;min-width:0}
+.proxy-name{font-size:14px;font-weight:600}
+.proxy-addr{font-size:12px;color:var(--on-surface-variant)}
+.proxy-chip{
+  font-size:10px;font-weight:600;background:var(--surface-container-high);
+  border-radius:999px;padding:3px 8px;color:var(--on-surface-variant);flex-shrink:0;
+}
 
-  /* ── Status Tab ── */
-  .conn-status-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    margin-bottom: 12px;
-  }
-  .conn-status-icon {
-    width: 56px; height: 56px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 12px;
-    transition: background 0.3s;
-  }
-  .conn-status-icon.active { background: var(--green-bg); }
-  .conn-status-icon.inactive { background: var(--gray-bg); }
-  .conn-status-icon svg { width: 28px; height: 28px; stroke: currentColor; fill: none; stroke-width: 2; }
-  .conn-status-icon.active svg { stroke: var(--green); }
-  .conn-status-icon.inactive svg { stroke: var(--gray); }
-  .conn-status-label { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-  .conn-status-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
-  .conn-status-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 14px; border-radius: 9999px;
-    font-size: 12px; font-weight: 600;
-  }
-  .conn-status-badge.connected { background: var(--green-bg); color: var(--green); }
-  .conn-status-badge.disconnected { background: var(--gray-bg); color: var(--text-secondary); }
-  .conn-status-badge-dot { width: 8px; height: 8px; border-radius: 50%; }
-  .conn-status-badge.connected .conn-status-badge-dot { background: var(--green); }
-  .conn-status-badge.disconnected .conn-status-badge-dot { background: var(--gray); }
-  .conn-info-grid {
-    display: flex; flex-direction: column; gap: 6px;
-    margin-top: 16px; text-align: left;
-  }
-  .conn-info-row {
-    display: flex; justify-content: space-between;
-    padding: 8px 12px; border-radius: 8px;
-    background: var(--bg-elevated);
-    font-size: 12px;
-  }
-  .conn-info-label { color: var(--text-secondary); font-weight: 500; }
-  .conn-info-value { color: var(--text); font-weight: 600; }
-  .conn-info-value.conn-info-ip { font-size: 15px; font-weight: 700; }
+.fab{
+  position:absolute;bottom:16px;right:14px;width:52px;height:52px;
+  border-radius:50%;background:var(--primary);border:none;display:flex;
+  align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:0 4px 12px rgba(37,99,235,.35);transition:transform .1s;
+}
+.fab:active{transform:scale(.9)}
+.fab svg{width:24px;height:24px;fill:var(--on-primary)}
 
-  /* ── Settings ── */
-  .settings-section { margin-bottom: 20px; }
-  .settings-section-title {
-    font-size: 11px; font-weight: 600; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.06em;
-    margin-bottom: 8px; padding: 0 2px;
-  }
-  .settings-group {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px; overflow: hidden;
-  }
-  .settings-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background 0.1s;
-  }
-  .settings-item:last-child { border-bottom: none; }
-  .settings-item:hover { background: var(--bg-elevated); }
-  .settings-item-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .settings-item-icon {
-    width: 30px; height: 30px; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    color: var(--icon-color);
-    background: var(--bg-elevated);
-  }
-  .settings-item-icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; }
-  .settings-item-label { font-size: 14px; font-weight: 500; color: var(--text); }
-  .settings-item-desc { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
-  .settings-item-value { font-size: 13px; color: var(--text-secondary); font-weight: 500; white-space: nowrap; }
-  .settings-item-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+/* Sheets */
+.sheet-overlay{
+  display:none;position:absolute;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.4);z-index:10;align-items:flex-end;
+}
+.sheet-overlay.open{display:flex}
+.sheet{
+  width:100%;background:var(--surface);border-radius:14px 14px 0 0;
+  padding:0 18px 24px;max-height:85%;overflow-y:auto;
+}
+.sheet-handle{width:36px;height:4px;background:var(--on-surface-variant);opacity:.3;border-radius:999px;margin:10px auto}
+.sheet h3{font-size:16px;font-weight:700;padding:10px 0 14px}
 
-  /* ── Toggle Switch ── */
-  .toggle {
-    width: 40px; height: 22px; border-radius: 9999px;
-    background: var(--toggle-bg); border: none; cursor: pointer;
-    position: relative; flex-shrink: 0;
-    transition: background 0.25s ease;
-  }
-  .toggle.active { background: var(--toggle-active); }
-  .toggle-knob {
-    position: absolute; top: 2px; left: 2px;
-    width: 18px; height: 18px; border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .toggle.active .toggle-knob { transform: translateX(18px); }
+.form-group{margin-bottom:4px}
+.form-group label{
+  display:block;font-size:12px;font-weight:600;
+  color:var(--on-surface-variant);margin-top:12px;margin-bottom:4px;
+}
+.form-input{
+  width:100%;border:1px solid var(--outline);border-radius:8px;
+  padding:12px 14px;font-size:14px;background:var(--surface);
+  color:var(--on-surface);outline:none;transition:border-color .15s;
+}
+.form-input:focus{border-color:var(--primary)}
+.form-suffix{position:relative}
+.form-suffix .form-input{padding-right:32px}
+.suffix-icon{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  font-size:14px;font-weight:700;pointer-events:none;
+}
+.suffix-icon.valid{color:var(--tertiary)}
+.suffix-icon.invalid{color:var(--error)}
 
-  /* ── Buttons ── */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
-    border: none; cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-    font-family: inherit;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: var(--accent-hover); }
-  .btn-outline {
-    background: transparent; color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .btn-outline:hover { background: var(--bg-elevated); }
-  .btn-danger { background: var(--red); color: #fff; }
-  .btn-danger:hover { background: #dc2626; }
-  .btn-ghost { background: transparent; color: var(--text-secondary); }
-  .btn-ghost:hover { background: var(--bg-elevated); color: var(--text); }
+.validation-hint{font-size:13px;font-weight:600;margin-top:12px}
+.validation-hint.ready{color:var(--tertiary)}
+.validation-hint.waiting{color:var(--on-surface-variant)}
 
-  /* ── VPN Button ── */
-  .vpn-btn {
-    width: 100%; padding: 14px; border-radius: 10px;
-    font-size: 15px; font-weight: 700; border: none; cursor: pointer;
-    font-family: inherit;
-    transition: background 0.2s, color 0.2s, transform 0.1s;
-  }
-  .vpn-btn:active { transform: scale(0.98); }
-  .vpn-btn.start { background: var(--accent); color: #fff; }
-  .vpn-btn.start:hover { background: var(--accent-hover); }
-  .vpn-btn.stop { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); }
-  .vpn-btn.stop:hover { background: var(--red); color: #fff; }
+.sheet-actions{display:flex;gap:8px;margin-top:16px}
+.btn{
+  border-radius:8px;padding:8px 20px;font-size:13px;font-weight:600;
+  border:1px solid var(--outline);cursor:pointer;background:transparent;
+  color:var(--on-surface-variant);transition:background .1s;
+  white-space:nowrap;
+}
+.btn:active{background:var(--surface-container-high)}
+.btn-primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn-primary:disabled{opacity:.4;cursor:default}
+.btn-test{}.btn-test.success{color:var(--tertiary)}.btn-test.fail{color:var(--error)}
 
-  /* ── Overlay / Modal ── */
-  .overlay {
-    position: absolute; inset: 0; z-index: 100;
-    background: var(--overlay-bg);
-    backdrop-filter: blur(2px);
-    display: flex; align-items: flex-end; justify-content: center;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.2s ease;
-    padding: 24px;
-  }
-  .overlay.open { opacity: 1; pointer-events: auto; }
-  .overlay.center { align-items: center; }
-  .modal {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    width: 100%; max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: var(--shadow-lg);
-    transform: translateY(20px) scale(0.97);
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb) transparent;
-  }
-  .modal::-webkit-scrollbar { width: 4px; }
-  .modal::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
-  .overlay.open .modal { transform: translateY(0) scale(1); }
-  .modal-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 18px; border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .modal-title { font-size: 16px; font-weight: 700; color: var(--text); }
-  .modal-close {
-    width: 32px; height: 32px; border-radius: 8px;
-    background: none; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--icon-color);
-    transition: background 0.15s, color 0.15s;
-  }
-  .modal-close:hover { background: var(--border); color: var(--text); }
-  .modal-close svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .modal-body { padding: 16px 18px; }
-  .modal-footer {
-    display: flex; gap: 8px;
-    padding: 12px 18px 16px; border-top: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .modal-footer .btn { flex: 1; }
+/* Detail sheet */
+.detail-status{display:flex;justify-content:space-between;align-items:center;padding:14px 0}
+.detail-status-text{font-size:14px;font-weight:600}
+.detail-status-text.connected{color:var(--tertiary)}
+.detail-status-text.disconnected{color:var(--on-surface-variant)}
+.detail-row{
+  display:flex;justify-content:space-between;padding:10px 0;
+  border-bottom:1px solid var(--outline-variant);
+}
+.detail-row:last-of-type{border-bottom:none}
+.detail-row-label{font-size:12px;color:var(--on-surface-variant);font-weight:500}
+.detail-row-value{font-size:14px;font-weight:600}
 
-  /* ── Form Elements ── */
-  .form-group { margin-bottom: 14px; }
-  .form-label {
-    display: block; font-size: 12px; font-weight: 600;
-    color: var(--text-secondary); margin-bottom: 4px;
-  }
-  .form-input {
-    width: 100%; padding: 10px 12px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 14px; color: var(--text);
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .form-input:focus { border-color: var(--accent); }
-  .form-input::placeholder { color: var(--text-tertiary); }
-  .form-select {
-    width: 100%; padding: 10px 12px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 14px; color: var(--text);
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.15s;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 10px center;
-    padding-right: 30px;
-  }
-  .form-select:focus { border-color: var(--accent); }
+/* Settings page */
+.section-title{
+  font-size:11px;font-weight:600;color:var(--on-surface-variant);
+  padding:0 2px 8px;margin-top:16px;text-transform:uppercase;letter-spacing:.5px;
+}
+.settings-group{border:1px solid var(--outline);border-radius:10px;overflow:hidden;background:var(--surface-container-low)}
+.settings-item{
+  display:flex;align-items:center;gap:10px;padding:0 14px;
+  min-height:44px;cursor:pointer;transition:background .1s;
+}
+.settings-item:active{background:var(--surface-container-high)}
+.settings-item:not(:last-child){border-bottom:1px solid var(--outline-variant)}
+.settings-icon-box{
+  width:30px;height:30px;border-radius:8px;background:var(--surface-container-high);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.settings-icon-box svg{width:16px;height:16px;color:var(--on-surface-variant)}
+.settings-label-col{flex:1;min-width:0}
+.settings-label{font-size:14px;color:var(--on-surface)}
+.settings-desc{font-size:12px;color:var(--on-surface-variant);margin-top:1px}
+.settings-value{font-size:12px;color:var(--on-surface-variant);padding-right:6px}
+.chevron{color:var(--on-surface-variant);opacity:.5;font-size:18px;line-height:1}
 
-  /* ── Form Validation ── */
-  .form-field-row {
-    display: flex; align-items: center; gap: 8px;
-  }
-  .form-field-row .form-input,
-  .form-field-row .form-select { flex: 1; }
-  .form-field-row .form-input.with-icon { padding-right: 36px; }
-  .val-icon {
-    width: 20px; height: 20px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    transition: opacity 0.2s, transform 0.2s;
-  }
-  .val-icon.valid { color: var(--green); }
-  .val-icon.invalid { color: var(--red); }
-  .val-icon.loading { color: var(--text-tertiary); }
-  @keyframes val-spin { to { transform: rotate(360deg); } }
-  .val-icon.loading svg { animation: val-spin 0.6s linear infinite; }
-  .val-summary {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 14px; border-radius: 8px;
-    font-size: 13px; font-weight: 600;
-    transition: background 0.2s, color 0.2s;
-    margin-top: 8px;
-  }
-  .val-summary.ready { background: var(--green-bg); color: var(--green); }
-  .val-summary.pending { background: var(--gray-bg); color: var(--text-secondary); }
+/* Switch */
+.switch-track{
+  width:40px;height:22px;border-radius:999px;background:#ccc;
+  cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;
+}
+.switch-track.on{background:var(--primary)}
+.switch-thumb{
+  width:18px;height:18px;border-radius:50%;background:white;
+  position:absolute;top:2px;left:2px;transition:transform .2s;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+.switch-track.on .switch-thumb{transform:translateX(18px)}
 
-  /* ── Connection Check ── */
-  .conn-check-icon {
-    width: 48px; height: 48px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    margin: 4px auto 14px;
-  }
-  .conn-check-icon.loading { background: var(--blue-bg); color: var(--blue); }
-  .conn-check-icon.success { background: var(--green-bg); color: var(--green); }
-  .conn-check-icon.fail { background: var(--red-bg); color: var(--red); }
-  .conn-check-icon.loading svg { animation: val-spin 0.8s linear infinite; }
-  .conn-check-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-  .conn-check-sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; }
+/* Dropdown */
+.dropdown-wrapper{position:relative}
+.dropdown-menu{
+  display:none;position:absolute;top:100%;right:0;min-width:160px;
+  margin-top:4px;background:var(--surface);border:1px solid var(--outline);
+  border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:20;overflow:hidden;
+}
+.dropdown-menu.open{display:block}
+.dropdown-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;cursor:pointer;font-size:14px;gap:24px;
+}
+.dropdown-item:hover{background:var(--surface-container-high)}
+.dropdown-item:not(:last-child){border-bottom:1px solid var(--outline-variant)}
+.dropdown-check{width:18px;height:18px;color:var(--primary);flex-shrink:0}
+.dropdown-check.hidden{visibility:hidden}
+body.dark .dropdown-menu{box-shadow:0 4px 16px rgba(0,0,0,.6)}
 
-  /* ── Proxy Detail ── */
-  .proxy-detail-header-status {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 14px;
-    padding: 10px 14px; border-radius: 8px;
-    background: var(--bg-elevated);
-  }
-  .proxy-detail-header-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .proxy-detail-header-dot.connected { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
-  .proxy-detail-header-dot.disconnected { background: var(--gray); }
-  .proxy-detail-header-text { font-size: 13px; font-weight: 600; color: var(--text); }
-  .proxy-detail-row {
-    display: flex; justify-content: space-between;
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-  }
-  .proxy-detail-row:last-child { border-bottom: none; }
-  .proxy-detail-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
-  .proxy-detail-value { font-size: 14px; color: var(--text); font-weight: 600; text-align: right; }
-  .proxy-detail-section { margin-bottom: 14px; }
-  .proxy-detail-section:last-child { margin-bottom: 0; }
-  .proxy-detail-section-title {
-    font-size: 11px; font-weight: 600; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.06em;
-    margin-bottom: 6px;
-  }
+/* Theme toggle */
+.theme-toggle{
+  position:fixed;top:12px;right:calc(50vw - 190px);
+  background:var(--surface);border:1px solid var(--outline);
+  border-radius:999px;padding:6px 14px;display:flex;align-items:center;gap:6px;
+  cursor:pointer;font-size:12px;color:var(--on-surface);z-index:30;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+.theme-toggle svg{width:14px;height:14px;fill:currentColor}
 
-  /* ── Split Tunneling App Item ── */
-  .app-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-  }
-  .app-item:last-child { border-bottom: none; }
-  .app-item-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .app-icon {
-    width: 32px; height: 32px; border-radius: 7px;
-    background: var(--bg-elevated);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--icon-color);
-    flex-shrink: 0;
-  }
-  .app-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; }
-  .app-name { font-size: 13px; font-weight: 500; color: var(--text); }
-  .app-package { font-size: 11px; color: var(--text-tertiary); }
+.footer-hint{text-align:center;margin-top:16px;font-size:11px;color:var(--on-surface-variant);opacity:.6}
 
-  .app-icon-circle {
-    width: 32px; height: 32px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700;
-    color: #fff; flex-shrink: 0; line-height: 1;
-  }
-
-  .toggle.allowed.active { background: var(--green); }
-  .toggle.blocked.active { background: var(--red); }
-
-  .section-tabs {
-    display: flex; gap: 4px; margin-bottom: 8px;
-  }
-  .section-tab {
-    padding: 6px 14px; border-radius: 6px;
-    background: none; border: none; cursor: pointer;
-    font-size: 12px; font-weight: 600; color: var(--text-secondary);
-    font-family: inherit;
-    transition: background 0.1s, color 0.1s;
-  }
-  .section-tab:hover { background: var(--bg-elevated); color: var(--text); }
-  .section-tab.active { background: var(--accent-subtle); color: var(--accent); }
-
-  /* ── Focus Visibility ── */
-  button:focus-visible,
-  .form-input:focus-visible,
-  .form-select:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-  .toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-  .tab-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
-  .proxy-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .fab:focus-visible,
-  .btn-primary:focus-visible,
-  .vpn-btn.start:focus-visible {
-    outline-color: #fff;
-    box-shadow: 0 0 0 4px var(--accent-subtle);
-  }
-
-  /* ── Helpers ── */
-  .mt-8 { margin-top: 8px; }
-  .mb-8 { margin-bottom: 8px; }
-  .text-center { text-align: center; }
-  .hidden { display: none; }
+/* Empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:400px;color:var(--on-surface-variant)}
+.empty-state p:first-child{font-size:16px;font-weight:500}
+.empty-state p:last-child{font-size:13px;margin-top:4px;opacity:.7}
 </style>
 </head>
 <body>
 
-<div class="phone-frame-wrap">
-<div class="phone-frame theme-light" id="appRoot">
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+  <span id="themeLabel">Light</span>
+</button>
 
-  <!-- Status Bar -->
-  <div class="status-bar">
-    <span class="time" id="statusTime">11:28</span>
-    <div class="status-icons">
-      <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
-      <svg viewBox="0 0 24 24"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+<h1>KiloProxy — Design Mockup</h1>
+
+<div class="device-frame" id="device">
+  <div class="notch"><div class="notch-dot"></div></div>
+
+  <!-- ===== PROXIES PAGE ===== -->
+  <div class="page active" id="page-proxies">
+    <div class="proxy-list">
+      <div class="proxy-card" data-proxy="DigitalOcean NYC">
+        <div class="proxy-dot on"></div>
+        <div class="proxy-info">
+          <div class="proxy-name">DigitalOcean NYC</div>
+          <div class="proxy-addr">nyc1.proxy.example:3010</div>
+        </div>
+        <div class="proxy-chip">SOCKS5</div>
+      </div>
+      <div class="proxy-card" data-proxy="AWS Tokyo">
+        <div class="proxy-dot off"></div>
+        <div class="proxy-info">
+          <div class="proxy-name">AWS Tokyo</div>
+          <div class="proxy-addr">tokyo.proxy.example:1080</div>
+        </div>
+        <div class="proxy-chip">SOCKS5</div>
+      </div>
+      <div class="proxy-card" data-proxy="CliProxy TZ">
+        <div class="proxy-dot off"></div>
+        <div class="proxy-info">
+          <div class="proxy-name">CliProxy TZ</div>
+          <div class="proxy-addr">us.cliproxy.io:3010</div>
+        </div>
+        <div class="proxy-chip">SOCKS5</div>
+      </div>
+    </div>
+    <button class="fab" id="fabAddBtn"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+  </div>
+
+  <!-- ===== STATUS PAGE ===== -->
+  <div class="page" id="page-status">
+    <div class="logo-row">
+      <div class="logo-icon">K</div>
+      <h2>KiloProxy</h2>
+    </div>
+    <div class="connection-card" id="connectionCard">
+      <div class="shield-circle disconnected" id="shieldIcon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="badge disconnected" id="statusBadge">
+        <div class="badge-dot"></div>
+        <span id="badgeText">Disconnected</span>
+      </div>
+      <div class="info-rows">
+        <div class="info-row"><span class="info-label">Your IP</span><span class="info-value ip" id="ipDisplay">—</span></div>
+        <div class="info-row"><span class="info-label">Server</span><span class="info-value" id="serverDisplay">—</span></div>
+        <div class="info-row"><span class="info-label">Uptime</span><span class="info-value" id="uptimeDisplay">—</span></div>
+      </div>
+      <button class="round-btn start" id="vpnRoundBtn">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
     </div>
   </div>
 
-  <!-- Top Bar: Logo -->
-  <div class="top-bar">
-    <div class="top-bar-left">
-      <span class="brand-name">KiloProxy</span>
+  <!-- ===== SETTINGS PAGE ===== -->
+  <div class="page" id="page-settings" style="padding-bottom:24px">
+    <div class="section-title">Appearance</div>
+    <div class="settings-group">
+      <div class="settings-item" id="themeSettingsItem">
+        <div class="settings-icon-box">
+          <svg viewBox="0 0 24 24"><path d="M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
+        </div>
+        <div class="settings-label-col"><div class="settings-label">Theme Mode</div></div>
+        <span class="settings-value" id="themeValue">Light</span>
+        <span class="chevron">&#x203A;</span>
+      </div>
+    </div>
+
+    <div class="section-title">Controls</div>
+    <div class="settings-group">
+      <div class="settings-item">
+        <div class="settings-icon-box">
+          <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+        </div>
+        <div class="settings-label-col">
+          <div class="settings-label">Notification Quick Control</div>
+          <div class="settings-desc">VPN control button in notification</div>
+        </div>
+        <div class="settings-trailing">
+          <div class="switch-track" id="notifSwitch"><div class="switch-thumb"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Split Tunneling</div>
+    <div class="settings-group">
+      <div class="settings-item">
+        <div class="settings-icon-box">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        </div>
+        <div class="settings-label-col">
+          <div class="settings-label">Configure apps</div>
+          <div class="settings-desc">Choose which apps route through the VPN or bypass it</div>
+        </div>
+        <span class="chevron">&#x203A;</span>
+      </div>
     </div>
   </div>
 
-  <!-- App Content -->
-  <div class="app-content">
+  <!-- Theme dropdown (rendered outside settings-item to avoid flex clipping) -->
+  <div class="dropdown-menu" id="themeDropdown">
+    <div class="dropdown-item" data-theme="light">
+      <span>Light</span>
+      <svg class="dropdown-check" id="check-light" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    </div>
+    <div class="dropdown-item" data-theme="dark">
+      <span>Dark</span>
+      <svg class="dropdown-check hidden" id="check-dark" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    </div>
+    <div class="dropdown-item" data-theme="system">
+      <span>System</span>
+      <svg class="dropdown-check hidden" id="check-system" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    </div>
+  </div>
 
-    <!-- Tab Panes -->
-    <div class="tab-content">
-
-      <!-- ── TAB 1: Proxies ── -->
-      <div class="tab-pane active" id="tabProxies" role="tabpanel">
-        <div id="proxyList">
-          <div class="proxy-card" data-proxy="0">
-            <div class="proxy-status-dot"></div>
-            <div class="proxy-card-body">
-              <div class="proxy-card-name">My SOCKS5</div>
-              <div class="proxy-card-addr">us.cliproxy.io:3010</div>
-            </div>
-            <span class="proxy-card-protocol">SOCKS5</span>
-          </div>
-          <div class="proxy-card" data-proxy="1">
-            <div class="proxy-status-dot"></div>
-            <div class="proxy-card-body">
-              <div class="proxy-card-name">Home Proxy</div>
-              <div class="proxy-card-addr">192.168.1.100:1080</div>
-            </div>
-            <span class="proxy-card-protocol">SOCKS5</span>
-          </div>
-          <div class="proxy-card" data-proxy="2">
-            <div class="proxy-status-dot"></div>
-            <div class="proxy-card-body">
-              <div class="proxy-card-name">Work Tunnel</div>
-              <div class="proxy-card-addr">10.0.0.1:3128</div>
-            </div>
-            <span class="proxy-card-protocol">SOCKS5</span>
-          </div>
-        </div>
-        <button class="fab" id="fabAdd" aria-label="Add proxy">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
-      </div>
-
-      <!-- ── TAB 2: Status ── -->
-      <div class="tab-pane" id="tabStatus" role="tabpanel">
-        <div class="conn-status-card">
-          <div class="conn-status-icon inactive" id="connStatusIcon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          </div>
-          <div class="conn-status-label">Your connection state</div>
-          <div class="conn-status-sub" id="connStatusSub"></div>
-          <span class="conn-status-badge disconnected" id="connStatusBadge">
-            <span class="conn-status-badge-dot"></span>
-            <span id="connBadgeText">Disconnected</span>
-          </span>
-          <div class="conn-info-grid" id="connInfoGrid">
-            <div class="conn-info-row">
-              <span class="conn-info-label">Your IP</span>
-              <span class="conn-info-value conn-info-ip" id="connIpDisplay">🇺🇸 US 103.73.185.50</span>
-            </div>
-            <div class="conn-info-row">
-              <span class="conn-info-label">Server</span>
-              <span class="conn-info-value" id="connServerDisplay">—</span>
-            </div>
-            <div class="conn-info-row">
-              <span class="conn-info-label">Connected since</span>
-              <span class="conn-info-value" id="connSinceDisplay">—</span>
-            </div>
-          </div>
-        </div>
-        <button class="vpn-btn start" id="statusVpnBtn">
-          <span id="statusVpnBtnText">Start VPN</span>
-        </button>
-      </div>
-
-      <!-- ── TAB 3: Settings ── -->
-      <div class="tab-pane" id="tabSettings" role="tabpanel">
-
-        <!-- Appearance -->
-        <div class="settings-section">
-          <div class="settings-section-title">Appearance</div>
-          <div class="settings-group">
-            <div class="settings-item" id="darkModeItem">
-              <div class="settings-item-left">
-                <div class="settings-item-icon">
-                  <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                </div>
-                <span class="settings-item-label">Dark mode</span>
-              </div>
-              <button class="toggle" id="darkModeToggle" aria-label="Toggle dark mode" aria-pressed="false">
-                <span class="toggle-knob"></span>
-              </button>
-            </div>
-            <div class="settings-item">
-              <div class="settings-item-left">
-                <div class="settings-item-icon">
-                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                </div>
-                <span class="settings-item-label">Language</span>
-              </div>
-              <span class="settings-item-value">English</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Connection -->
-        <div class="settings-section">
-          <div class="settings-section-title">Connection</div>
-          <div class="settings-group">
-            <div class="settings-item">
-              <div class="settings-item-left">
-                <div class="settings-item-icon">
-                  <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                </div>
-                <span class="settings-item-label">Auto-connect</span>
-              </div>
-              <button class="toggle" id="autoConnectToggle" aria-label="Toggle auto-connect" aria-pressed="false"><span class="toggle-knob"></span></button>
-            </div>
-            <div class="settings-item" id="connCheckItem">
-              <div class="settings-item-left">
-                <div class="settings-item-icon">
-                  <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                </div>
-                <div>
-                  <span class="settings-item-label">Connectivity check</span>
-                  <div class="settings-item-desc">Verifies proxy reachability</div>
-                </div>
-              </div>
-              <div class="settings-item-right">
-                <button class="btn btn-outline" id="runConnCheckBtn" style="padding: 5px 10px; font-size: 12px;">Check now</button>
-                <button class="toggle active" id="connCheckToggle" aria-label="Toggle connectivity check" aria-pressed="true"><span class="toggle-knob"></span></button>
-              </div>
-            </div>
-            <div class="settings-item">
-              <div class="settings-item-left">
-                <div class="settings-item-icon">
-                  <svg viewBox="0 0 24 24"><path d="M19 10V6a3 3 0 0 0-3-3H8a3 3 0 0 0-3 3v4"/><rect x="2" y="10" width="20" height="10" rx="2"/><line x1="12" y1="14" x2="12" y2="16"/></svg>
-                </div>
-                <span class="settings-item-label">UDP proxy</span>
-              </div>
-              <button class="toggle" id="udpToggle" aria-label="Toggle UDP proxy" aria-pressed="false"><span class="toggle-knob"></span></button>
-            </div>
-            <div class="settings-item">
-              <div class="settings-item-left">
-                <div class="settings-item-icon">
-                  <svg viewBox="0 0 24 24"><path d="M4 8l8-5 8 5-8 5-8-5z"/><path d="M4 8v8l8 5 8-5V8"/><path d="M12 13v8"/></svg>
-                </div>
-                <span class="settings-item-label">IPv6 proxy</span>
-              </div>
-              <button class="toggle" id="ipv6Toggle" aria-label="Toggle IPv6 proxy" aria-pressed="false"><span class="toggle-knob"></span></button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Routing -->
-        <div class="settings-section">
-          <div class="settings-section-title">Routing</div>
-          <div class="settings-group">
-            <div class="settings-item" id="routePrefItem">
-              <div class="settings-item-left">
-                <div class="settings-item-icon">
-                  <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                </div>
-                <span class="settings-item-label">Route preference</span>
-              </div>
-              <span class="settings-item-value" id="routePrefValue">All traffic</span>
-            </div>
-            <div class="settings-item" id="dnsSettingsItem">
-              <div class="settings-item-left">
-                <div class="settings-item-icon">
-                  <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                </div>
-                <span class="settings-item-label">DNS</span>
-              </div>
-              <span class="settings-item-value" id="dnsValue">8.8.8.8:53</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Advanced -->
-        <div class="settings-section">
-          <div class="settings-section-title">Advanced</div>
-          <div class="settings-group">
-            <div class="settings-item">
-              <div class="settings-item-left">
-                <div class="settings-item-icon">
-                  <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                </div>
-                <span class="settings-item-label">Auto-stop on screen off</span>
-              </div>
-              <button class="toggle" id="autoStopToggle" aria-label="Toggle auto-stop" aria-pressed="false"><span class="toggle-knob"></span></button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Split Tunneling -->
-        <div class="settings-section">
-          <div class="settings-section-title">Split Tunneling</div>
-          <p style="font-size:12px;color:var(--text-secondary);margin:0 0 8px 2px;line-height:1.4;">Choose which apps route through the VPN or bypass it</p>
-          <div class="section-tabs" role="tablist" aria-label="Split tunneling mode">
-            <button class="section-tab active" data-stab="allowed" role="tab" aria-selected="true" id="stabAllowed">Allowed Apps</button>
-            <button class="section-tab" data-stab="blocked" role="tab" aria-selected="false" id="stabBlocked">Blocked Apps</button>
-          </div>
-          <div class="settings-group" id="splitTunnelGroup" role="tabpanel"></div>
-          <div class="conn-check-sub text-center mt-8" id="splitTunnelEmpty" style="display:none;">No apps in this list</div>
-        </div>
-
-        <!-- About -->
-        <div class="settings-section">
-          <div class="settings-section-title">About</div>
-          <div class="settings-group">
-            <div class="settings-item">
-              <span class="settings-item-label">Version</span>
-              <span class="settings-item-value">1.0</span>
-            </div>
-          </div>
-        </div>
+  <!-- ADD PROXY SHEET -->
+  <div class="sheet-overlay" id="addSheet">
+    <div class="sheet" id="addSheetPanel">
+      <div class="sheet-handle"></div>
+      <h3>Add Proxy</h3>
+      <div class="form-group"><label>Profile Name</label><input class="form-input" id="inputName" placeholder="e.g. My Proxy" value="CliProxy TZ"></div>
+      <div class="form-group"><label>Host</label><div class="form-suffix"><input class="form-input" id="inputHost" placeholder="e.g. proxy.example.com" value="us.cliproxy.io"></div></div>
+      <div class="form-group"><label>Port</label><div class="form-suffix"><input class="form-input" id="inputPort" placeholder="e.g. 1080" value="3010"><span class="suffix-icon valid">&#x2713;</span></div></div>
+      <div class="form-group"><label>Username</label><div class="form-suffix"><input class="form-input" id="inputUser" placeholder="Username" value="1x9f1198135-region-TZ"></div></div>
+      <div class="form-group"><label>Password</label><div class="form-suffix"><input class="form-input" id="inputPass" placeholder="Password" value="Miraz12345"></div></div>
+      <div class="validation-hint ready" id="validationHint">&#x2713; Ready to save</div>
+      <div class="sheet-actions">
+        <button class="btn" id="cancelBtn">Cancel</button>
+        <button class="btn btn-test" id="testBtn">Test Connection</button>
+        <button class="btn btn-primary" id="saveBtn">Save</button>
       </div>
     </div>
+  </div>
 
-    <!-- ── OVERLAYS ── -->
-
-    <!-- Proxy Detail Overlay -->
-    <div class="overlay center" id="proxyDetailOverlay" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
-      <div class="modal" style="max-width: 340px;">
-        <div class="modal-header">
-          <span class="modal-title" id="detailTitle">Proxy Details</span>
-          <button class="modal-close" data-close="proxyDetailOverlay" aria-label="Close"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-        </div>
-        <div class="modal-body">
-          <div class="proxy-detail-header-status" id="detailHeaderStatus">
-            <span class="proxy-detail-header-dot disconnected" id="detailStatusDot"></span>
-            <span class="proxy-detail-header-text" id="detailStatusText">Disconnected</span>
-          </div>
-          <div class="proxy-detail-section">
-            <div class="proxy-detail-row">
-              <span class="proxy-detail-label">Profile</span>
-              <span class="proxy-detail-value" id="detailProfile">My SOCKS5</span>
-            </div>
-            <div class="proxy-detail-row">
-              <span class="proxy-detail-label">Host</span>
-              <span class="proxy-detail-value" id="detailHost">us.cliproxy.io</span>
-            </div>
-            <div class="proxy-detail-row">
-              <span class="proxy-detail-label">Port</span>
-              <span class="proxy-detail-value" id="detailPort">3010</span>
-            </div>
-            <div class="proxy-detail-row">
-              <span class="proxy-detail-label">Auth</span>
-              <span class="proxy-detail-value" id="detailAuth">Username + Password</span>
-            </div>
-          </div>
-          <button class="vpn-btn start" id="vpnToggleBtn">
-            <span id="vpnBtnText">Start VPN</span>
-          </button>
-          <button class="btn btn-outline mt-8" style="width:100%" id="editProxyBtn">Edit Proxy</button>
-        </div>
+  <!-- PROXY DETAIL SHEET -->
+  <div class="sheet-overlay" id="detailSheet">
+    <div class="sheet" id="detailSheetPanel">
+      <div class="sheet-handle"></div>
+      <div class="detail-status">
+        <span style="font-size:16px;font-weight:700" id="detailTitle">DigitalOcean NYC</span>
+        <span class="detail-status-text connected" id="detailStatus">&#x25CF; Connected</span>
+      </div>
+      <div class="detail-row"><span class="detail-row-label">Host</span><span class="detail-row-value" id="detailHost">nyc1.proxy.example</span></div>
+      <div class="detail-row"><span class="detail-row-label">Port</span><span class="detail-row-value" id="detailPort">3010</span></div>
+      <div class="detail-row"><span class="detail-row-label">Auth</span><span class="detail-row-value" id="detailAuth">Username + Password</span></div>
+      <div class="sheet-actions" style="flex-direction:column;gap:6px">
+        <button class="btn btn-primary" id="detailVpnBtn" style="width:100%;padding:12px;font-size:14px">Start VPN</button>
+        <button class="btn" id="detailEditBtn" style="width:100%;padding:12px">Edit Proxy</button>
       </div>
     </div>
+  </div>
+</div>
 
-    <!-- Add/Edit Proxy Overlay -->
-    <div class="overlay center" id="addProxyOverlay" role="dialog" aria-modal="true" aria-labelledby="addProxyTitle">
-      <div class="modal" style="max-width: 340px;">
-        <div class="modal-header">
-          <span class="modal-title" id="addProxyTitle">Add Proxy</span>
-          <button class="modal-close" data-close="addProxyOverlay" aria-label="Close"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label" for="addName">Profile Name</label>
-            <input class="form-input" id="addName" placeholder="e.g. My Proxy" value="">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="addHost">Host</label>
-            <div class="form-field-row">
-              <input class="form-input with-icon" id="addHost" placeholder="e.g. proxy.example.com" value="">
-              <span class="val-icon" id="valHost" data-field="host"></span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="addPort">Port</label>
-            <div class="form-field-row">
-              <input class="form-input with-icon" id="addPort" placeholder="e.g. 1080" value="">
-              <span class="val-icon" id="valPort" data-field="port"></span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="addAuth">Auth Type</label>
-            <select class="form-select" id="addAuth">
-              <option value="none" selected>None</option>
-              <option value="password">Username + Password</option>
-            </select>
-          </div>
-          <div id="authFields" class="hidden">
-            <div class="form-group">
-              <label class="form-label" for="addUser">Username</label>
-              <div class="form-field-row">
-                <input class="form-input with-icon" id="addUser" placeholder="Username">
-                <span class="val-icon" id="valUser" data-field="user"></span>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="addPass">Password</label>
-              <div class="form-field-row">
-                <input class="form-input with-icon" id="addPass" type="password" placeholder="Password">
-                <span class="val-icon" id="valPass" data-field="pass"></span>
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="addDns">DNS</label>
-            <input class="form-input" id="addDns" placeholder="e.g. 8.8.8.8:53" value="">
-          </div>
-          <div class="val-summary pending" id="valSummary">
-            <span id="valSummaryIcon"></span>
-            <span id="valSummaryText">Fill all required fields</span>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-ghost" data-close="addProxyOverlay">Cancel</button>
-          <button class="btn btn-primary" id="addProxySave">Save</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Connection Check Result Overlay -->
-    <div class="overlay center" id="connCheckOverlay" role="dialog" aria-modal="true" aria-labelledby="connCheckTitle">
-      <div class="modal" style="max-width: 320px;">
-        <div class="modal-header">
-          <span class="modal-title" id="connCheckTitle">Connectivity Check</span>
-          <button class="modal-close" data-close="connCheckOverlay" aria-label="Close"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-        </div>
-        <div class="modal-body text-center" id="connCheckBody">
-          <div class="conn-check-icon loading" id="connCheckIcon">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="47 47" stroke-linecap="round"/></svg>
-          </div>
-          <div class="conn-check-title" id="connCheckStatusTitle">Checking proxy…</div>
-          <div class="conn-check-sub" id="connCheckStatusSub">Testing connection to <span id="connCheckTarget">us.cliproxy.io:3010</span></div>
-          <div class="conn-info-grid" id="connCheckDetails" style="display:none;">
-            <div class="conn-info-row">
-              <span class="conn-info-label">Latency</span>
-              <span class="conn-info-value" id="connCheckLatency">—</span>
-            </div>
-            <div class="conn-info-row">
-              <span class="conn-info-label">Exit IP</span>
-              <span class="conn-info-value" id="connCheckExitIp">—</span>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-outline" style="width:100%" data-close="connCheckOverlay">Done</button>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /.app-content -->
-
-  <!-- Bottom Tab Bar -->
-  <div class="tab-bar" role="tablist">
-    <button class="tab-item active" data-tab="0" role="tab" aria-selected="true">
-      <span class="tab-indicator"></span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+  <!-- Bottom tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="proxies">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
       <span>Proxies</span>
     </button>
-    <button class="tab-item" data-tab="1" role="tab" aria-selected="false">
-      <span class="tab-indicator"></span>
-      <svg viewBox="0 0 24 24"><path d="M12 2.5l7.5 3.2v5.4c0 4.9-3.15 8.6-7.5 10.15-4.35-1.55-7.5-5.25-7.5-10.15V5.7z"/></svg>
+    <button class="tab-btn" data-tab="status">
+      <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
       <span>Status</span>
     </button>
-    <button class="tab-item" data-tab="2" role="tab" aria-selected="false">
-      <span class="tab-indicator"></span>
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <button class="tab-btn" data-tab="settings">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
       <span>Settings</span>
     </button>
   </div>
-</div><!-- /.phone-frame -->
-</div><!-- /.phone-frame-wrap -->
+</div>
+
+<p class="footer-hint">Interactive mockup &middot; Click elements to explore</p>
 
 <script>
-(function() {
-  'use strict';
-
-  // ── State ──
-  const state = {
-    currentTab: 0,
-    isDark: false,
-    vpnRunning: false,
-    selectedProxy: 0,
-    editMode: false,
-    editIndex: -1,
-    connectStartTime: null,
-    durationTimerId: null
-  };
-
-  const proxies = [
-    { name: 'My SOCKS5', host: 'us.cliproxy.io', port: '3010', auth: 'password', user: 'user1', pass: 'pass123', dns: '', connected: false },
-    { name: 'Home Proxy', host: '192.168.1.100', port: '1080', auth: 'none', user: '', pass: '', dns: '', connected: false },
-    { name: 'Work Tunnel', host: '10.0.0.1', port: '3128', auth: 'none', user: '', pass: '', dns: '', connected: false }
-  ];
-
-  // ── DOM refs ──
-  const $ = id => document.getElementById(id);
-  const root = $('appRoot');
-  const tabPanes = document.querySelectorAll('.tab-pane');
-  const tabItems = document.querySelectorAll('.tab-item');
-  const proxyCards = document.querySelectorAll('.proxy-card');
-  const fabAdd = $('fabAdd');
-
-  const realIp = { flag: '🇺🇸', code: 'US', ip: '103.73.185.50' };
-  const proxyIp = { flag: '🇹🇿', code: 'TZ', ip: '197.250.226.244' };
-
-  // ── Update clock ──
-  function updateClock() {
-    const now = new Date();
-    const h = String(now.getHours()).padStart(2, '0');
-    const m = String(now.getMinutes()).padStart(2, '0');
-    $('statusTime').textContent = h + ':' + m;
-  }
-  updateClock();
-  setInterval(updateClock, 30000);
-
-  // ── IP value helper ──
-  function currentIpLabel(vpnRunning) {
-    return vpnRunning
-      ? proxyIp.flag + ' ' + proxyIp.code + ' ' + proxyIp.ip
-      : realIp.flag + ' ' + realIp.code + ' ' + realIp.ip;
-  }
-
-  // ── Tabs ──
-  function switchTab(index) {
-    var prevIndex = state.currentTab;
-    if (index === prevIndex) return;
-    var movingRight = index > prevIndex;
-    var incomingPane = tabPanes[index];
-
-    tabPanes.forEach(function(pane, i) {
-      if (i !== index) pane.classList.remove('active', 'from-left', 'from-right');
-    });
-
-    incomingPane.classList.remove('active', 'from-left', 'from-right');
-    incomingPane.classList.add(movingRight ? 'from-right' : 'from-left');
-
-    void incomingPane.offsetWidth;
-    requestAnimationFrame(function() {
-      incomingPane.classList.add('active');
-    });
-
-    state.currentTab = index;
-    tabItems.forEach(function(item, i) {
-      item.classList.toggle('active', i === index);
-      item.setAttribute('aria-selected', i === index);
-    });
-
-    if (fabAdd) fabAdd.classList.toggle('fab-hidden', index !== 0);
-  }
-
-  tabItems.forEach(function(item) {
-    item.addEventListener('click', function() {
-      var idx = parseInt(this.getAttribute('data-tab'));
-      if (idx !== state.currentTab) switchTab(idx);
-    });
-  });
-
-  // ── Duration ──
-  function formatDuration(ms) {
-    var totalSeconds = Math.max(0, Math.floor(ms / 1000));
-    var h = Math.floor(totalSeconds / 3600);
-    var m = Math.floor((totalSeconds % 3600) / 60);
-    var s = totalSeconds % 60;
-    var pad = function(n) { return String(n).padStart(2, '0'); };
-    return h > 0 ? (h + ':' + pad(m) + ':' + pad(s)) : (pad(m) + ':' + pad(s));
-  }
-
-  function tickConnectedDuration() {
-    var el = $('connSinceDisplay');
-    if (!el || !state.connectStartTime) return;
-    el.textContent = formatDuration(Date.now() - state.connectStartTime);
-  }
-
-  // ── Status tab VPN ──
-  function updateStatusTab(vpnRunning) {
-    var icon = $('connStatusIcon');
-    var badge = $('connStatusBadge');
-    var badgeText = $('connBadgeText');
-    var sub = $('connStatusSub');
-    var ipDisplay = $('connIpDisplay');
-    var serverDisplay = $('connServerDisplay');
-    var sinceDisplay = $('connSinceDisplay');
-    var btn = $('statusVpnBtn');
-    var btnText = $('statusVpnBtnText');
-
-    if (vpnRunning) {
-      icon.className = 'conn-status-icon active';
-      badge.className = 'conn-status-badge connected';
-      badgeText.textContent = 'Connected';
-      sub.textContent = 'Traffic routed through SOCKS5 proxy';
-      if (!state.connectStartTime) {
-        state.connectStartTime = Date.now();
-      }
-      ipDisplay.textContent = currentIpLabel(true);
-      ipDisplay.className = 'conn-info-value conn-info-ip';
-      serverDisplay.textContent = proxies[state.selectedProxy].host + ':' + proxies[state.selectedProxy].port;
-      sinceDisplay.textContent = formatDuration(Date.now() - state.connectStartTime);
-      btn.className = 'vpn-btn stop';
-      btnText.textContent = 'Stop VPN';
-      if (!state.durationTimerId) {
-        state.durationTimerId = setInterval(tickConnectedDuration, 1000);
-      }
-    } else {
-      icon.className = 'conn-status-icon inactive';
-      badge.className = 'conn-status-badge disconnected';
-      badgeText.textContent = 'Disconnected';
-      sub.textContent = '';
-      ipDisplay.textContent = currentIpLabel(false);
-      ipDisplay.className = 'conn-info-value conn-info-ip';
-      serverDisplay.textContent = '\u2014';
-      sinceDisplay.textContent = '\u2014';
-      btn.className = 'vpn-btn start';
-      btnText.textContent = 'Start VPN';
-      state.connectStartTime = null;
-      if (state.durationTimerId) {
-        clearInterval(state.durationTimerId);
-        state.durationTimerId = null;
-      }
-    }
-  }
-
-  $('statusVpnBtn').addEventListener('click', function() {
-    state.vpnRunning = !state.vpnRunning;
-    updateStatusTab(state.vpnRunning);
-    proxies.forEach(function(p, i) {
-      p.connected = (i === state.selectedProxy && state.vpnRunning);
-    });
-    document.querySelectorAll('.proxy-card .proxy-status-dot').forEach(function(dot, i) {
-      dot.classList.toggle('connected', i === state.selectedProxy && state.vpnRunning);
-    });
-  });
-
-  // ── Overlay helpers ──
-  function openOverlay(id) {
-    var el = typeof id === 'string' ? $(id) : id;
-    if (el) el.classList.add('open');
-  }
-
-  function closeOverlay(id) {
-    var el = typeof id === 'string' ? $(id) : id;
-    if (el) el.classList.remove('open');
-  }
-
-  function closeAllOverlays() {
-    document.querySelectorAll('.overlay').forEach(function(o) {
-      o.classList.remove('open');
-    });
-  }
-
-  // Backdrop click to close overlays
-  document.querySelectorAll('.overlay').forEach(function(overlay) {
-    overlay.addEventListener('click', function(e) {
-      if (e.target === this) {
-        this.classList.remove('open');
-      }
-    });
-  });
-
-  // Close via data-close attribute
-  document.querySelectorAll('[data-close]').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      closeOverlay(this.getAttribute('data-close'));
-    });
-  });
-
-  // ── (overflow menu removed) ──
-
-  // ── Proxy Cards -> Detail ──
-  function openDetailForIndex(idx) {
-    state.selectedProxy = idx;
-    var p = proxies[idx];
-    $('detailProfile').textContent = p.name;
-    $('detailHost').textContent = p.host;
-    $('detailPort').textContent = p.port;
-    $('detailAuth').textContent = p.auth === 'password' ? 'Username + Password' : 'None';
-
-    var connected = p.connected;
-    var dot = $('detailStatusDot');
-    var text = $('detailStatusText');
-    dot.className = 'proxy-detail-header-dot ' + (connected ? 'connected' : 'disconnected');
-    text.textContent = connected ? 'Connected' : 'Disconnected';
-    text.style.color = connected ? 'var(--green)' : 'var(--text-secondary)';
-
-    var vpnBtn = $('vpnToggleBtn');
-    state.vpnRunning = connected;
-    vpnBtn.className = 'vpn-btn ' + (connected ? 'stop' : 'start');
-    $('vpnBtnText').textContent = connected ? 'Stop VPN' : 'Start VPN';
-
-    openOverlay('proxyDetailOverlay');
-  }
-
-  proxyCards.forEach(function(card) {
-    card.addEventListener('click', function() {
-      var idx = parseInt(this.getAttribute('data-proxy'));
-      openDetailForIndex(idx);
-    });
-  });
-
-  // ── VPN Toggle (detail) ──
-  $('vpnToggleBtn').addEventListener('click', function() {
-    state.vpnRunning = !state.vpnRunning;
-    proxies[state.selectedProxy].connected = state.vpnRunning;
-
-    var dot = $('detailStatusDot');
-    var text = $('detailStatusText');
-    dot.className = 'proxy-detail-header-dot ' + (state.vpnRunning ? 'connected' : 'disconnected');
-    text.textContent = state.vpnRunning ? 'Connected' : 'Disconnected';
-    text.style.color = state.vpnRunning ? 'var(--green)' : 'var(--text-secondary)';
-
-    this.className = 'vpn-btn ' + (state.vpnRunning ? 'stop' : 'start');
-    $('vpnBtnText').textContent = state.vpnRunning ? 'Stop VPN' : 'Start VPN';
-
-    updateStatusTab(state.vpnRunning);
-
-    document.querySelectorAll('.proxy-card .proxy-status-dot').forEach(function(dot, i) {
-      dot.classList.toggle('connected', i === state.selectedProxy && state.vpnRunning);
-    });
-  });
-
-  // ── Edit Proxy ──
-  $('editProxyBtn').addEventListener('click', function() {
-    var p = proxies[state.selectedProxy];
-    state.editMode = true;
-    state.editIndex = state.selectedProxy;
-    $('addProxyTitle').textContent = 'Edit Proxy';
-    $('addName').value = p.name;
-    $('addHost').value = p.host;
-    $('addPort').value = p.port;
-    $('addAuth').value = p.auth;
-    $('addUser').value = p.user;
-    $('addPass').value = p.pass;
-    $('addDns').value = p.dns;
-    $('authFields').className = p.auth === 'password' ? '' : 'hidden';
-
-    ['host', 'port', 'user', 'pass'].forEach(function(f) {
-      var icon = $('val' + f.charAt(0).toUpperCase() + f.slice(1));
-      if (icon) { icon.innerHTML = ''; icon.className = 'val-icon'; }
-    });
-    $('valSummary').className = 'val-summary pending';
-    $('valSummaryIcon').textContent = '';
-    $('valSummaryText').textContent = 'Fill all required fields';
-
-    closeAllOverlays();
-    openOverlay('addProxyOverlay');
-  });
-
-  // ── FAB -> Add Proxy ──
-  fabAdd.addEventListener('click', function() {
-    state.editMode = false;
-    state.editIndex = -1;
-    $('addProxyTitle').textContent = 'Add Proxy';
-    $('addName').value = '';
-    $('addHost').value = '';
-    $('addPort').value = '';
-    $('addAuth').value = 'none';
-    $('addUser').value = '';
-    $('addPass').value = '';
-    $('addDns').value = '';
-    $('authFields').className = 'hidden';
-    ['host', 'port', 'user', 'pass'].forEach(function(f) {
-      var icon = $('val' + f.charAt(0).toUpperCase() + f.slice(1));
-      if (icon) { icon.innerHTML = ''; icon.className = 'val-icon'; }
-    });
-    $('valSummary').className = 'val-summary pending';
-    $('valSummaryIcon').textContent = '';
-    $('valSummaryText').textContent = 'Fill all required fields';
-    openOverlay('addProxyOverlay');
-  });
-
-  // ── Auth type toggle ──
-  $('addAuth').addEventListener('change', function() {
-    var visible = this.value === 'password';
-    $('authFields').className = visible ? '' : 'hidden';
-    if (!visible) {
-      var userIcon = $('valUser');
-      var passIcon = $('valPass');
-      if (userIcon) { userIcon.innerHTML = ''; userIcon.className = 'val-icon'; }
-      if (passIcon) { passIcon.innerHTML = ''; passIcon.className = 'val-icon'; }
-    }
-    runValidation();
-  });
-
-  // ── Form Validation ──
-  function getValIconHTML(valid) {
-    if (valid === 'valid') return '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-    if (valid === 'invalid') return '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-    if (valid === 'loading') return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>';
-    return '';
-  }
-
-  function setFieldValidation(field, val) {
-    var map = { host: 'Host', port: 'Port', user: 'User', pass: 'Pass' };
-    var icon = $('val' + map[field]);
-    if (!icon) return;
-    icon.innerHTML = getValIconHTML(val);
-    icon.className = 'val-icon ' + val;
-  }
-
-  function validateField(field) {
-    if (field === 'host') { return $('addHost').value.trim().length > 0 ? 'valid' : 'invalid'; }
-    if (field === 'port') {
-      var val = $('addPort').value.trim();
-      if (val === '') return 'invalid';
-      var num = parseInt(val, 10);
-      return (!isNaN(num) && num >= 1 && num <= 65535) ? 'valid' : 'invalid';
-    }
-    if (field === 'user') {
-      if ($('addAuth').value !== 'password') return 'valid';
-      return $('addUser').value.trim().length > 0 ? 'valid' : 'invalid';
-    }
-    if (field === 'pass') {
-      if ($('addAuth').value !== 'password') return 'valid';
-      return $('addPass').value.trim().length > 0 ? 'valid' : 'invalid';
-    }
-    return 'invalid';
-  }
-
-  function runValidation() {
-    var fields = ['host', 'port'];
-    if ($('addAuth').value === 'password') fields.push('user', 'pass');
-
-    fields.forEach(function(f) {
-      var result = validateField(f);
-      var isEmpty = (f === 'host' && $('addHost').value.trim() === '') ||
-                    (f === 'port' && $('addPort').value.trim() === '') ||
-                    (f === 'user' && $('addUser').value.trim() === '') ||
-                    (f === 'pass' && $('addPass').value.trim() === '');
-      if (!isEmpty) {
-        setFieldValidation(f, result);
-      } else {
-        setFieldValidation(f, 'invalid');
-      }
-    });
-
-    updateValidationSummary();
-  }
-
-  function updateValidationSummary() {
-    var hostVal = $('addHost').value.trim() !== '';
-    var portVal = (function() { var n = parseInt($('addPort').value.trim(), 10); return !isNaN(n) && n >= 1 && n <= 65535; })();
-    var userVal = $('addAuth').value !== 'password' || $('addUser').value.trim() !== '';
-    var passVal = $('addAuth').value !== 'password' || $('addPass').value.trim() !== '';
-
-    var allValid = hostVal && portVal && userVal && passVal;
-    var summary = $('valSummary');
-    var icon = $('valSummaryIcon');
-    var text = $('valSummaryText');
-
-    if (allValid) {
-      summary.className = 'val-summary ready';
-      icon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-      text.textContent = 'Ready to connect';
-    } else {
-      summary.className = 'val-summary pending';
-      icon.innerHTML = '';
-      text.textContent = 'Fill all required fields';
-    }
-  }
-
-  ['addHost', 'addPort', 'addUser', 'addPass'].forEach(function(id) {
-    var el = $(id);
-    if (el) el.addEventListener('input', runValidation);
-  });
-
-  // ── Add/Edit Proxy Save ──
-  $('addProxySave').addEventListener('click', function() {
-    var name = $('addName').value.trim();
-    var host = $('addHost').value.trim();
-    var port = $('addPort').value.trim();
-    var auth = $('addAuth').value;
-    var user = $('addUser').value.trim();
-    var pass = $('addPass').value.trim();
-    var dns = $('addDns').value.trim();
-
-    if (!name || !host || !port) return;
-
-    if (state.editMode && state.editIndex >= 0) {
-      var p = proxies[state.editIndex];
-      p.name = name;
-      p.host = host;
-      p.port = port;
-      p.auth = auth;
-      p.user = user;
-      p.pass = pass;
-      p.dns = dns;
-      var card = document.querySelector('.proxy-card[data-proxy="' + state.editIndex + '"]');
-      if (card) {
-        card.querySelector('.proxy-card-name').textContent = name;
-        card.querySelector('.proxy-card-addr').textContent = host + ':' + port;
-      }
-    } else {
-      proxies.push({
-        name: name, host: host, port: port, auth: auth,
-        user: user, pass: pass, dns: dns, connected: false
-      });
-      renderProxyList();
-    }
-
-    closeAllOverlays();
-  });
-
-  function renderProxyList() {
-    var list = $('proxyList');
-    list.innerHTML = '';
-    proxies.forEach(function(p, i) {
-      var card = document.createElement('div');
-      card.className = 'proxy-card';
-      card.setAttribute('data-proxy', i);
-      card.innerHTML =
-        '<div class="proxy-status-dot' + (p.connected ? ' connected' : '') + '"></div>' +
-        '<div class="proxy-card-body">' +
-          '<div class="proxy-card-name">' + escapeHtml(p.name) + '</div>' +
-          '<div class="proxy-card-addr">' + escapeHtml(p.host) + ':' + escapeHtml(p.port) + '</div>' +
-        '</div>' +
-        '<span class="proxy-card-protocol">SOCKS5</span>';
-      card.addEventListener('click', function() {
-        var idx = parseInt(this.getAttribute('data-proxy'));
-        openDetailForIndex(idx);
-      });
-      list.appendChild(card);
-    });
-  }
-
-  function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
-  }
-
-  // ── Dark Mode Toggle ──
-  $('darkModeToggle').addEventListener('click', function() {
-    state.isDark = !state.isDark;
-    this.classList.toggle('active', state.isDark);
-    this.setAttribute('aria-pressed', String(state.isDark));
-    root.className = state.isDark ? 'phone-frame theme-dark' : 'phone-frame theme-light';
-  });
-
-  // ── Other toggles ──
-  document.querySelectorAll('.toggle:not(#darkModeToggle)').forEach(function(toggle) {
-    toggle.addEventListener('click', function() {
-      var nowActive = this.classList.toggle('active');
-      this.setAttribute('aria-pressed', String(nowActive));
-    });
-  });
-
-  // ── Split Tunneling ──
-  const splitAppsData = [
-    { id: 'chrome',    name: 'Chrome',    pkg: 'com.android.chrome',             letter: 'C', color: '#4285F4', state: 'allowed' },
-    { id: 'youtube',   name: 'YouTube',   pkg: 'com.google.android.youtube',     letter: 'Y', color: '#FF0000', state: 'allowed' },
-    { id: 'whatsapp',  name: 'WhatsApp',  pkg: 'com.whatsapp',                   letter: 'W', color: '#25D366', state: 'default' },
-    { id: 'instagram', name: 'Instagram', pkg: 'com.instagram.android',          letter: 'I', color: '#E4405F', state: 'blocked' },
-    { id: 'maps',      name: 'Maps',      pkg: 'com.google.android.apps.maps',   letter: 'M', color: '#00BCD4', state: 'default' }
-  ];
-  var splitCurrentTab = 'allowed';
-
-  function renderSplitTunnel() {
-    var group = $('splitTunnelGroup');
-    var empty = $('splitTunnelEmpty');
-    var visibleCount = 0;
-    group.innerHTML = '';
-
-    splitAppsData.forEach(function(app) {
-      // Show allowed + default in Allowed tab; blocked + default in Blocked tab
-      var showInTab = splitCurrentTab === 'allowed'
-        ? (app.state !== 'blocked')
-        : (app.state !== 'allowed');
-      if (!showInTab) return;
-
-      var isOn = app.state === splitCurrentTab;
-      var toggleCls = 'toggle' + (isOn ? ' active' : '') + (splitCurrentTab === 'allowed' ? ' allowed' : ' blocked');
-
-      var item = document.createElement('div');
-      item.className = 'app-item';
-      item.innerHTML =
-        '<div class="app-item-left">' +
-          '<div class="app-icon app-icon-circle" style="background:' + app.color + ';">' + app.letter + '</div>' +
-          '<div>' +
-            '<div class="app-name">' + escapeHtml(app.name) + '</div>' +
-            '<div class="app-package">' + escapeHtml(app.pkg) + '</div>' +
-          '</div>' +
-        '</div>';
-
-      var toggle = document.createElement('button');
-      toggle.className = toggleCls;
-      toggle.setAttribute('data-app', app.id);
-      toggle.setAttribute('aria-label', 'Toggle ' + app.name);
-      toggle.setAttribute('aria-pressed', String(isOn));
-      toggle.innerHTML = '<span class="toggle-knob"></span>';
-
-      toggle.addEventListener('click', function() {
-        var found = splitAppsData.find(function(a) { return a.id === app.id; });
-        if (!found) return;
-        if (splitCurrentTab === 'allowed') {
-          found.state = found.state === 'allowed' ? 'default' : 'allowed';
-        } else {
-          found.state = found.state === 'blocked' ? 'default' : 'blocked';
-        }
-        renderSplitTunnel();
-      });
-
-      item.appendChild(toggle);
-      group.appendChild(item);
-      visibleCount++;
-    });
-
-    empty.style.display = visibleCount === 0 ? 'block' : 'none';
-  }
-
-  // ── Split Tunneling tab switching ──
-  document.querySelectorAll('.section-tab').forEach(function(tab) {
-    tab.addEventListener('click', function() {
-      splitCurrentTab = this.getAttribute('data-stab');
-      document.querySelectorAll('.section-tab').forEach(function(t) {
-        t.classList.remove('active');
-        t.setAttribute('aria-selected', 'false');
-      });
+(function(){
+  // ── Tab switching ──
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function(){
+      const tab = this.getAttribute('data-tab');
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('page-' + tab).classList.add('active');
       this.classList.add('active');
-      this.setAttribute('aria-selected', 'true');
-      renderSplitTunnel();
+      closeAllSheets();
+      closeDropdown();
     });
   });
 
-  // ── Connectivity Check ──
-  var runConnCheckBtn = $('runConnCheckBtn');
-  if (runConnCheckBtn) {
-    runConnCheckBtn.addEventListener('click', function() {
-      var p = proxies[state.selectedProxy] || proxies[0];
-      var icon = $('connCheckIcon');
-      var title = $('connCheckStatusTitle');
-      var sub = $('connCheckStatusSub');
-      var target = $('connCheckTarget');
-      var details = $('connCheckDetails');
-      var latency = $('connCheckLatency');
-      var exitIp = $('connCheckExitIp');
-
-      icon.className = 'conn-check-icon loading';
-      icon.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="47 47" stroke-linecap="round"/></svg>';
-      title.textContent = 'Checking proxy\u2026';
-      target.textContent = p.host + ':' + p.port;
-      sub.innerHTML = 'Testing connection to <span id="connCheckTarget">' + p.host + ':' + p.port + '</span>';
-      details.style.display = 'none';
-
-      openOverlay('connCheckOverlay');
-
-      setTimeout(function() {
-        icon.className = 'conn-check-icon success';
-        icon.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-        title.textContent = 'Proxy is reachable';
-        sub.textContent = 'Connected successfully to ' + p.host + ':' + p.port;
-        latency.textContent = (40 + Math.floor(Math.random() * 90)) + ' ms';
-        exitIp.textContent = proxyIp.flag + ' ' + proxyIp.code + ' ' + proxyIp.ip;
-        details.style.display = 'grid';
-      }, 1100);
+  // ── Theme ──
+  let currentTheme = 'light';
+  function setTheme(mode){
+    document.body.className = mode === 'dark' ? 'dark' : (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : '');
+    document.getElementById('themeLabel').textContent = mode === 'dark' ? 'Dark' : mode === 'system' ? 'System' : 'Light';
+    document.getElementById('themeValue').textContent = mode === 'dark' ? 'Dark' : mode === 'system' ? 'System' : 'Light';
+    ['light','dark','system'].forEach(t => {
+      const el = document.getElementById('check-' + t);
+      if(el) el.classList.toggle('hidden', t !== mode);
     });
+    currentTheme = mode;
+  }
+  window.toggleTheme = function(){
+    setTheme(currentTheme === 'light' ? 'dark' : 'light');
+  };
+  setTheme('light');
+
+  // ── Theme dropdown ──
+  function positionDropdown(){
+    const item = document.getElementById('themeSettingsItem');
+    const dd = document.getElementById('themeDropdown');
+    const rect = item.getBoundingClientRect();
+    const frame = document.getElementById('device');
+    const frameRect = frame.getBoundingClientRect();
+    dd.style.position = 'fixed';
+    dd.style.top = (rect.bottom + 4) + 'px';
+    dd.style.left = (rect.left) + 'px';
+    dd.style.width = rect.width + 'px';
   }
 
-  // ── Init ──
-  if (fabAdd) fabAdd.classList.remove('fab-hidden');
-  tabItems.forEach(function(item, i) {
-    item.setAttribute('aria-selected', i === 0);
-  });
-  updateStatusTab(false);
-  renderSplitTunnel();
+  function openDropdown(){
+    positionDropdown();
+    document.getElementById('themeDropdown').classList.add('open');
+  }
+  function closeDropdown(){
+    document.getElementById('themeDropdown').classList.remove('open');
+  }
+  window.closeDropdown = closeDropdown;
 
+  document.getElementById('themeSettingsItem').addEventListener('click', function(e){
+    e.stopPropagation();
+    const dd = document.getElementById('themeDropdown');
+    if(dd.classList.contains('open')){ closeDropdown(); return; }
+    openDropdown();
+  });
+
+  document.querySelectorAll('#themeDropdown .dropdown-item').forEach(item => {
+    item.addEventListener('click', function(e){
+      e.stopPropagation();
+      setTheme(this.getAttribute('data-theme'));
+      closeDropdown();
+    });
+  });
+
+  document.addEventListener('click', function(e){
+    const dd = document.getElementById('themeDropdown');
+    if(dd.classList.contains('open') && !dd.contains(e.target) && e.target !== document.getElementById('themeSettingsItem') && !document.getElementById('themeSettingsItem').contains(e.target)){
+      closeDropdown();
+    }
+  });
+
+  // ── Notification switch ──
+  let notifOn = false;
+  document.getElementById('notifSwitch').addEventListener('click', function(){
+    notifOn = !notifOn;
+    this.classList.toggle('on', notifOn);
+  });
+
+  // ── Sheets ──
+  let activeSheet = null;
+
+  function openSheet(id){
+    closeAllSheets();
+    activeSheet = id;
+    document.getElementById(id).classList.add('open');
+  }
+
+  function closeAllSheets(){
+    document.querySelectorAll('.sheet-overlay').forEach(el => el.classList.remove('open'));
+    activeSheet = null;
+  }
+
+  // Click overlay (not sheet panel) to close
+  document.querySelectorAll('.sheet-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e){
+      if(e.target === this) closeAllSheets();
+    });
+  });
+
+  // FAB -> Add sheet
+  document.getElementById('fabAddBtn').addEventListener('click', function(){ openSheet('addSheet'); });
+
+  // Cancel -> close add sheet
+  document.getElementById('cancelBtn').addEventListener('click', function(){ closeAllSheets(); });
+
+  // Proxy cards -> detail sheet
+  document.querySelectorAll('.proxy-card').forEach(card => {
+    card.addEventListener('click', function(){
+      const name = this.getAttribute('data-proxy');
+      document.getElementById('detailTitle').textContent = name;
+      const isConnected = name === 'DigitalOcean NYC';
+      const statusEl = document.getElementById('detailStatus');
+      statusEl.textContent = isConnected ? '\u25CF Connected' : '\u25CB Disconnected';
+      statusEl.className = 'detail-status-text ' + (isConnected ? 'connected' : 'disconnected');
+      const vpnBtn = document.getElementById('detailVpnBtn');
+      vpnBtn.textContent = isConnected ? 'Stop VPN' : 'Start VPN';
+      openSheet('detailSheet');
+    });
+  });
+
+  // Detail VPN toggle
+  document.getElementById('detailVpnBtn').addEventListener('click', function(){
+    const status = document.getElementById('detailStatus');
+    const isOn = status.textContent.includes('Connected');
+    if(isOn){
+      this.textContent = 'Start VPN';
+      status.textContent = '\u25CB Disconnected';
+      status.className = 'detail-status-text disconnected';
+    } else {
+      this.textContent = 'Stop VPN';
+      status.textContent = '\u25CF Connected';
+      status.className = 'detail-status-text connected';
+    }
+  });
+
+  // Detail Edit button -> close
+  document.getElementById('detailEditBtn').addEventListener('click', function(){ closeAllSheets(); });
+
+  // ── VPN toggle (status page) ──
+  let vpnConnected = false;
+  let vpnTimer = null;
+  let vpnStartTime = null;
+
+  document.getElementById('vpnRoundBtn').addEventListener('click', function(){
+    vpnConnected = !vpnConnected;
+    const shield = document.getElementById('shieldIcon');
+    const badge = document.getElementById('statusBadge');
+    const badgeText = document.getElementById('badgeText');
+    const btn = this;
+    const ipDisplay = document.getElementById('ipDisplay');
+    const serverDisplay = document.getElementById('serverDisplay');
+    const uptimeDisplay = document.getElementById('uptimeDisplay');
+
+    if(vpnConnected){
+      badge.className = 'badge connected';
+      badgeText.textContent = 'Connected';
+      shield.className = 'shield-circle connected';
+      btn.className = 'round-btn stop';
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>';
+      ipDisplay.textContent = '\u{1F1F9}\u{1F1FF} TZ 196.55.32.100';
+      serverDisplay.textContent = 'us.cliproxy.io:3010';
+      vpnStartTime = Date.now();
+      if(vpnTimer) clearInterval(vpnTimer);
+      vpnTimer = setInterval(() => {
+        const diff = Date.now() - vpnStartTime;
+        const h = Math.floor(diff/3600000);
+        const m = Math.floor((diff%3600000)/60000);
+        const s = Math.floor((diff%60000)/1000);
+        uptimeDisplay.textContent = h > 0 ? h+'h '+m+'m '+s+'s' : m > 0 ? m+'m '+s+'s' : s+'s';
+      }, 1000);
+    } else {
+      badge.className = 'badge disconnected';
+      badgeText.textContent = 'Disconnected';
+      shield.className = 'shield-circle disconnected';
+      btn.className = 'round-btn start';
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+      ipDisplay.textContent = '\u2014';
+      serverDisplay.textContent = '\u2014';
+      uptimeDisplay.textContent = '\u2014';
+      if(vpnTimer){ clearInterval(vpnTimer); vpnTimer = null; }
+    }
+  });
+
+  // ── Test Connection ──
+  document.getElementById('testBtn').addEventListener('click', function(){
+    const btn = this;
+    btn.textContent = 'Testing...';
+    btn.className = 'btn btn-test';
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.textContent = '\u2713 Proxy works';
+      btn.className = 'btn btn-test success';
+      btn.disabled = false;
+    }, 1500);
+  });
+
+  // ── Save ──
+  document.getElementById('saveBtn').addEventListener('click', function(){
+    const btn = this;
+    btn.textContent = 'Saved!';
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    setTimeout(() => {
+      closeAllSheets();
+      btn.textContent = 'Save';
+      btn.disabled = false;
+      btn.style.opacity = '';
+    }, 600);
+  });
+
+  // Reposition dropdown on scroll/resize
+  window.addEventListener('scroll', function(){ if(document.getElementById('themeDropdown').classList.contains('open')) positionDropdown(); });
+  window.addEventListener('resize', function(){ if(document.getElementById('themeDropdown').classList.contains('open')) positionDropdown(); });
 })();
 </script>
-
 </body>
 </html>
