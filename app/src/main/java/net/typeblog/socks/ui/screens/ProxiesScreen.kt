@@ -48,6 +48,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import net.typeblog.socks.ui.components.ProxyCard
 import net.typeblog.socks.ui.components.VpnButton
 import net.typeblog.socks.ui.viewmodel.VpnViewModel
