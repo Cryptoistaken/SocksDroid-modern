@@ -4,4 +4,7 @@ interface IVpnService
 {
 	boolean isRunning();
 	void stop();
+	String getCurrentIp();
+	String getCountryCode();
+	long getConnectedSince();
 }

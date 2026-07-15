@@ -1,93 +1,80 @@
-SocksDroid-modern
----
-A modernized SOCKS5 client for Android 5.0+ (supporting up to Android 16). Original https://github.com/PeterCxy/SocksDroid
+# SocksDroid-modern
 
-This version features a modernized UI with Material You (Dynamic Colors) and introduces several new features:
-- **Profiles**: Save and manage multiple server configurations.
-- **Authentication**: Supports SOCKS5 username and password authentication.
-- **IPv6 Support**: Option to route IPv6 traffic through the proxy.
-- **Per-App Proxy**: Split tunneling to choose which apps use the proxy (or bypass it).
-- **Auto Connect**: Automatically connect on device boot.
+A modern fork of [SocksDroid](https://github.com/AlexeyRF/SocksDroid) — an Android SOCKS5 VPN client with per-app proxy, DNS customization, and multi-profile management.
 
-Most of the JNI code are imported from `shadowsocks-android` project because they have already done most of the work.
+**Status:** Backend features complete. UI redesign in progress (Compose migration Phase 2).
 
-### THIS IS NOT A SHADOWSOCKS CLIENT! SOCKS5 IS NOT SHADOWSOCKS!
+## Features
 
-UDP Forwarding
----
-As `tun2socks` does not support UDP associate but has its own implementation of UDP forwarding `badvpn-udpgw`, so it is needed that the udpgw daemon run on remote server to use UDP forwarding.
+- **SOCKS5 Proxy** — Route device traffic through any SOCKS5 server
+- **Profile Management** — Multiple profiles with encrypted storage (AES-256-GCM)
+- **Authentication** — None or Username+Password per profile
+- **Route Modes** — All traffic / CHN bypass / RU bypass / RU+CHN bypass
+- **DNS Customization** — Presets (Google, Cloudflare, AdGuard) or custom DNS:port
+- **Per-App Proxy (Split Tunneling)** — Route or bypass individual apps through VPN
+- **IPv6 Proxy** — Forward IPv6 traffic through the proxy
+- **UDP Forwarding** — UDP over SOCKS5 via badvpn-udpgw
+- **IP Detection** — Shows real & proxy IP with country flags (Unicode emoji)
+- **Theme** — Light / Dark / System theme modes
+- **Auto-Connect** — Start VPN automatically on device boot
+- **Auto-Stop** — Stop VPN when screen turns off
+- **Connectivity Check** — Test connection on save (UI pending)
+- **Dynamic Colors** — Material You theming (Android 12+)
+- **Foreground Service** — Persistent notification with VPN status
 
-On remote server
-
-```
-badvpn-udpgw --listen-addr 127.0.0.1:7300
-```
-
-And set `UDP Gateway` in this app to `127.0.0.1:7300`
-
-DNS
----
-If the server does not run `udpgw`, DNS lookups can also be processed in this app.
-
-It makes use of the TCP DNS feature of `pdnsd`. You just set a DNS server that supports TCP DNS in this app, and all DNS requests will be transformed into TCP queries.
-
-Routing
----
-The app has an embedded list of non-Chinese IPs. Chinese users can make use of it for the best experience in bypassing GFW.
-
-GFW
----
-Note that SOCKS5 is currently blocked by the GFW, which means Chinese users cannot connect to any SOCKS5 servers outside China directly.
-
-But there are still solutions. For example, you can use tools like stunnel to circumvent the firewall.
-
-License
----
-This project is licensed under GNU General Public License Version 3 or later.
-
----
-
-# Русский (Russian)
-
-SocksDroid-modern
----
-Модернизированный SOCKS5-клиент для Android 5.0+ (с поддержкой вплоть до Android 16). Оригинал https://github.com/PeterCxy/SocksDroid
-
-Эта версия отличается обновленным пользовательским интерфейсом с поддержкой Material You (Dynamic Colors) и включает несколько новых функций:
-- **Профили (Profiles)**: Сохранение и управление несколькими конфигурациями серверов.
-- **Аутентификация (Authentication)**: Поддержка аутентификации SOCKS5 по имени пользователя и паролю.
-- **Поддержка IPv6**: Возможность маршрутизации IPv6-трафика через прокси.
-- **Прокси для приложений (Per-App Proxy)**: Раздельное туннелирование для выбора приложений, которые будут использовать прокси (или обходить его).
-- **Автозапуск (Auto Connect)**: Автоматическое подключение при загрузке устройства.
-
-Перенаправление UDP (UDP Forwarding)
----
-Так как `tun2socks` не поддерживает UDP Associate, но имеет собственную реализацию перенаправления UDP `badvpn-udpgw`, для работы этой функции необходимо, чтобы на удаленном сервере был запущен демон udpgw.
-
-На удаленном сервере:
+## Architecture
 
 ```
-badvpn-udpgw --listen-addr 127.0.0.1:7300
+app/src/main/java/net/typeblog/socks/
+├── MainActivity.kt          — Entry point, applies theme, hosts fragment
+├── ProfileFragment.kt       — Main settings UI (PreferenceFragmentCompat)
+├── SocksVpnService.kt       — VPN service with IP tracking, auto-stop, AIDL binder
+├── SocksApplication.kt      — App init, Dynamic Colors, default prefs
+├── BootReceiver.kt          — Auto-connect on boot
+├── AppSelector.kt           — Per-app package picker dialog
+├── System.kt                — JNI bridge (native libs)
+└── util/
+    ├── Constants.kt         — All preference keys
+    ├── Countries.kt         — 253-country database with flags
+    ├── Profile.kt           — Encrypted per-profile storage
+    ├── ProfileFactory.kt    — Profile cache (WeakReference)
+    ├── ProfileManager.kt    — Profile CRUD (EncryptedSharedPreferences)
+    ├── Routes.kt            — VPN route definitions
+    └── Utility.kt           — IP check, flag conversion, shell exec
 ```
 
-Затем в этом приложении установите `UDP Gateway` (UDP-шлюз) на `127.0.0.1:7300`.
+### Native Code (`jni/`)
+- `pdnsd/` — DNS proxy daemon (TCP to UDP)
+- `badvpn/` — tun2socks SOCKS5-to-TUN tunnel + lwip TCP/IP stack
+- `system.cpp` — JNI helpers (file descriptor passing, ABI detection)
+- `libancillary/` — Unix fd passing
 
-DNS
----
-Если сервер не использует `udpgw`, DNS-запросы также могут обрабатываться в этом приложении.
+## Building
 
-Оно использует функцию TCP DNS программы `pdnsd`. Вам нужно просто указать в приложении DNS-сервер, который поддерживает TCP DNS, и все DNS-запросы будут преобразованы в TCP-запросы.
+```bash
+# Clone with submodules (for jni/ dependencies)
+git clone --recurse-submodules https://github.com/AlexeyRF/SocksDroid-modern
+cd SocksDroid-modern
 
-Маршрутизация (Routing)
----
-Приложение содержит встроенный список IP-адресов России. Он нужен, чтобы не копроментировать прокси.
+# Build native libraries
+ndk-build -C app/src/main/jni
 
-РКН
----
-Обратите внимание, что протокол SOCKS5 в настоящее время блокируется РКН.
+# Build APK
+./gradlew assembleDebug
+```
 
-Но решения есть. [socks-reabilitator](https://github.com/AlexeyRF/Socks-Reabilitator).
+Requires: Android SDK 34+, NDK 27+, JDK 17.
 
-Лицензия (License)
----
-Этот проект распространяется под лицензией GNU General Public License Version 3 или новее.
+## Design Mockup
+
+A working HTML/CSS prototype (`redesign-mockup.html`) shows the target UI — KiloProxy branding with 3-tab bottom navigation (Proxies / Status / Settings), IP display with country flags, split tunneling with per-app toggles, and light/dark theme.
+
+## Roadmap
+
+- **Phase 1 (Complete):** Security fixes (EncryptedSharedPreferences, NDK hardening, R8), architecture fixes, Java→Kotlin migration, backend features (IP, theme, auto-stop, connectivity)
+- **Phase 2 (Next):** Compose UI migration — scaffold, theme, navigation, Dashboard, Settings, Split Tunneling, remove XML/Fragments
+- **Phase 3 (Stretch):** SuperProxy-inspired polish — animations, bottom sheets, connectivity overlay, per-profile status dots
+
+## License
+
+GPL v3 (inherited from upstream SocksDroid). Native components (pdnsd, badvpn) under their respective licenses.

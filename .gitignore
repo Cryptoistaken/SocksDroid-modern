@@ -2,3 +2,6 @@ build
 obj
 libs
 assets
+.gradle/
+local.properties
+superproxy_screen*.xml

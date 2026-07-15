@@ -27,6 +27,19 @@
             android:layout_height="wrap_content" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/ip_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:gravity="center"
+        android:textColor="?attr/colorOnSurface"
+        android:background="?attr/colorSurfaceVariant" />
+
     <FrameLayout
         android:id="@+id/frame"
         android:layout_width="match_parent"

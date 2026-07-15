@@ -3,18 +3,24 @@ package net.typeblog.socks
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.net.VpnService
 import android.net.VpnService.Builder
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.os.Process
 import android.text.TextUtils
 import android.util.Log
+import androidx.preference.PreferenceManager
 import net.typeblog.socks.R
+import net.typeblog.socks.util.Constants
 import net.typeblog.socks.util.Routes
 import net.typeblog.socks.util.Utility
 import net.typeblog.socks.util.Constants.INTENT_APP_BYPASS
@@ -30,6 +36,7 @@ import net.typeblog.socks.util.Constants.INTENT_ROUTE
 import net.typeblog.socks.util.Constants.INTENT_SERVER
 import net.typeblog.socks.util.Constants.INTENT_UDP_GW
 import net.typeblog.socks.util.Constants.INTENT_USERNAME
+import net.typeblog.socks.util.Constants.PREF_AUTO_STOP
 import net.typeblog.socks.BuildConfig.DEBUG
 
 class SocksVpnService : VpnService() {
@@ -41,11 +48,52 @@ class SocksVpnService : VpnService() {
         override fun stop() {
             stopMe()
         }
+
+        override fun getCurrentIp(): String {
+            return mCurrentIp ?: ""
+        }
+
+        override fun getCountryCode(): String {
+            return mCountryCode ?: ""
+        }
+
+        override fun getConnectedSince(): Long {
+            return mConnectedSince
+        }
     }
 
     private var mInterface: ParcelFileDescriptor? = null
     private var mRunning = false
     private val mBinder: IBinder = VpnBinder()
+
+    private var mCurrentIp: String? = null
+    private var mCountryCode: String? = null
+    private var mConnectedSince: Long = 0L
+    private val mIpCheckHandler = Handler(Looper.getMainLooper())
+    private val mScreenOffReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == Intent.ACTION_SCREEN_OFF) {
+                Log.d(TAG, "Screen off received, auto-stopping VPN")
+                stopMe()
+            }
+        }
+    }
+    private val mIpCheckRunnable = object : Runnable {
+        override fun run() {
+            Thread {
+                try {
+                    val info = Utility.checkPublicIp()
+                    if (info != null) {
+                        mCurrentIp = info.ip
+                        mCountryCode = info.countryCode
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "IP check failed", e)
+                }
+            }.start()
+            mIpCheckHandler.postDelayed(this, 30000)
+        }
+    }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -119,6 +167,17 @@ class SocksVpnService : VpnService() {
         if (mInterface != null)
             start(mInterface!!.fd, server, port, username, passwd, dns, dnsPort, ipv6, udpgw)
 
+        if (mRunning) {
+            mConnectedSince = System.currentTimeMillis()
+            mIpCheckHandler.post(mIpCheckRunnable)
+
+            val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+            if (prefs.getBoolean(PREF_AUTO_STOP, false)) {
+                val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)
+                registerReceiver(mScreenOffReceiver, filter)
+            }
+        }
+
         return START_STICKY
     }
 
@@ -153,6 +212,19 @@ class SocksVpnService : VpnService() {
             mInterface?.close()
         } catch (e: Exception) {
             Log.e(TAG, "Error: ${e.message}", e)
+        }
+
+        mCurrentIp = null
+        mCountryCode = null
+        mConnectedSince = 0L
+        mRunning = false
+
+        mIpCheckHandler.removeCallbacks(mIpCheckRunnable)
+
+        try {
+            unregisterReceiver(mScreenOffReceiver)
+        } catch (e: Exception) {
+            // Receiver may not have been registered
         }
 
         stopSelf()

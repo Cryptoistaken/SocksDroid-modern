@@ -51,4 +51,12 @@
 	
     <string name="dynamic_colors">Dynamic Colors (Material You)</string>
     <string name="dynamic_colors_sum">Apply colors from your wallpaper (Android 12+)</string>
+
+    <string name="appearance">Appearance</string>
+    <string name="theme_mode">Theme Mode</string>
+    <string name="proxy_settings">Proxy Settings</string>
+    <string name="connectivity_check">Connectivity Check</string>
+    <string name="connectivity_check_sum">Automatically test connection when saving credentials</string>
+    <string name="auto_stop">Auto Stop</string>
+    <string name="auto_stop_sum">Stop VPN automatically when screen turns off</string>
 </resources>

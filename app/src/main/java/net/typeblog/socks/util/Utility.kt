@@ -19,10 +19,16 @@ import net.typeblog.socks.util.Constants.INTENT_SERVER
 import net.typeblog.socks.util.Constants.INTENT_USERNAME
 import net.typeblog.socks.util.Constants.INTENT_PASSWORD
 import net.typeblog.socks.util.Constants.INTENT_UDP_GW
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
+
+data class IpInfo(val ip: String, val countryCode: String)
 
 object Utility {
     private val TAG = Utility::class.java.simpleName
@@ -185,5 +191,33 @@ object Utility {
         } else {
             context.startService(i)
         }
+    }
+
+    @JvmStatic
+    fun checkPublicIp(): IpInfo? {
+        return try {
+            val url = URL("http://ip-api.com/line/?fields=query,countryCode")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.connectTimeout = 5000
+            conn.readTimeout = 5000
+            val reader = BufferedReader(InputStreamReader(conn.inputStream))
+            val line = reader.readLine()
+            reader.close()
+            conn.disconnect()
+            if (line != null && line.contains(",")) {
+                val parts = line.split(",")
+                IpInfo(parts[0], parts[1])
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    @JvmStatic
+    fun countryCodeToFlag(countryCode: String): String {
+        if (countryCode.length != 2) return "\uD83C\uDF10"
+        val firstChar = Character.toChars(0x1F1E6 - 'A'.code + countryCode[0].uppercaseChar().code)[0]
+        val secondChar = Character.toChars(0x1F1E6 - 'A'.code + countryCode[1].uppercaseChar().code)[0]
+        return "$firstChar$secondChar"
     }
 }

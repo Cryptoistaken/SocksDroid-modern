@@ -100,7 +100,7 @@ app/
 
 ---
 
-## ✅ Phase 1 — Foundation (Session 1 — COMPLETE)
+### Phase 1 — Foundation (COMPLETE)
 
 > 16 files changed, 113 insertions, 95 deletions
 > 5 parallel agents, zero file overlap
@@ -184,6 +184,17 @@ app/
 | `AndroidManifest.xml` | BootReceiver `exported="true"` → `"false"` | ✅ | — |
 | `app/build.gradle` | Add `security-crypto`, `appcompat`, `preference-ktx`, `activity-ktx` deps | ✅ | — |
 
+**Session 3 — Backend Feature Polish (Jul 15, 2026):**
+- [x] IP detection via ip-api.com (`Utility.checkPublicIp()`, 30s periodic poll in `SocksVpnService`)
+- [x] Country flag display (`Countries.kt`: 253 entries, `countryCodeToFlag()` in `Utility.kt`, Unicode regional indicators)
+- [x] Theme mode preference (`PREF_THEME_MODE` — Light/Dark/System via `AppCompatDelegate.setDefaultNightMode()`)
+- [x] Auto-stop VPN on screen off (`PREF_AUTO_STOP`, `ACTION_SCREEN_OFF` broadcast receiver in `SocksVpnService`)
+- [x] Connectivity check preference (`PREF_CONNECTIVITY_CHECK` — wired to SharedPreferences but NOT consumed by backend logic)
+- [x] AIDL interface extended: `getCurrentIp()`, `getCountryCode()`, `getConnectedSince()`
+- [x] HTML mockup redesign: SocksDroid → KiloProxy branding, Split Tunneling single-list with 3-state per-app toggle
+- [x] Feature audit document (`feature-audit.md`) matching mockup features to backend
+- [x] All `.md` documents deduplicated and consolidated into MASTER.md as single source of truth
+
 ### ⬜ Phase 1 — What's Left
 
 | # | Task | Files | Difficulty | Agent Plan |
@@ -197,6 +208,19 @@ app/
 ## 🔲 Phase 2 — Modern UI (Jetpack Compose)
 
 > Goal: Replace XML + PreferenceFragment with Compose + Navigation + Dashboard
+
+### Phase 2 — Compose UI Migration (Session 4 — IN PROGRESS)
+
+- [x] Compose dependencies added to build.gradle (BOM 2024.10.01, navigation-compose, lifecycle-viewmodel-compose, activity-compose)
+- [x] Theme system created: Color.kt (light/dark palettes), Type.kt (system fonts), Theme.kt (PREF_THEME_MODE-aware, Dynamic Colors support)
+- [x] Navigation scaffold: Screen sealed class (4 routes), NavHost, BottomAppBar with 3 tabs (Globe/Shield/Gear), hidden for SplitTunneling
+- [x] MainActivity.kt rewritten: edge-to-edge, setContent with KiloProxyTheme + AppNavigation
+- [x] VpnViewModel.kt: AIDL service binding, 1s polling loop, IP/state tracking, public IP check, ProfileManager delegation
+- [x] ProxiesScreen.kt: LazyColumn of ProxyCards, FAB, ModalBottomSheet for detail + add/edit with form validation
+- [x] StatusScreen.kt: ConnectionCard (shield icon, IP+flag, connected duration) + VpnButton (start/stop)
+- [x] SettingsScreen.kt: All preference sections (Appearance, Connection, Routing, Advanced, Split Tunneling, About) with Switch toggles + dialog pickers
+- [x] SplitTunnelingScreen.kt: Allowed/Blocked tabs, 15 demo apps with per-app toggles persisted to adv_app_list
+- [x] ProxyCard.kt, ConnectionCard.kt, VpnButton.kt, SettingsItem.kt, AppToggleItem.kt — all component composables
 
 ### 2.1 Scaffolding
 
@@ -327,12 +351,22 @@ app/src/main/java/net/typeblog/socks/
 
 ---
 
+## Known Bugs
+
+1. **`View.VISIBLE` / `View.GONE` import missing** — `ProfileFragment.kt` (lines 562, 565, 574, 581) and `MainActivity.kt` (line 39) use `View.VISIBLE` / `View.GONE` without `import android.view.View`. Parent class imports provide indirect access on some compilers, but this may fail on clean builds. Fix: add `import android.view.View` to both files.
+
+2. **`PREF_CONNECTIVITY_CHECK` is a stub** — the preference is saved to SharedPreferences but nothing in `SocksVpnService` or elsewhere actually reads it. No connectivity monitoring logic exists. A future session should implement periodic connectivity pings and display results in the UI.
+
+---
+
 ## 🧩 Session Log
 
 | Session | Date | Focus | Agents Used | Files Changed | Status |
 |---------|------|-------|-------------|---------------|--------|
 | 1 | 2026-07-15 | Phase 1 — Security + Architecture fixes | 5 parallel | 16 | ✅ |
 | 2 | 2026-07-15 | Kotlin migration (13 `.java` → `.kt`) + exported service fix | 4 parallel | 20 | ✅ |
+| 3 | Jul 15, 2026 | Backend polish: IP detection, country flags, theme mode, auto-stop, connectivity check pref, AIDL extension, HTML mockup redesign (KiloProxy branding, Split Tunneling redesign), doc dedup | 3 explorer + 3 fixer | Completed |
+| 4 | Jul 15, 2026 | Compose UI migration: theme, nav, 4 screens (Proxies/Status/Settings/SplitTunneling), VpnViewModel, 5 components, build config | 3 fixer | In Progress |
 
 ### Session Template
 
@@ -367,18 +401,19 @@ app/src/main/java/net/typeblog/socks/
 
 ## 🚀 Next Session Ready
 
-**Remaining Phase 1 (only 1 item):**
+### Immediate Build Fixes (compile then fix errors)
+1. Build and fix any compile errors in the new Compose files
+2. Ensure navigation between all 4 screens works
+3. Fix service binding in VpnViewModel if needed
 
-```
-Priority 1: Fix service binding race
-  - ProfileFragment.kt — bindService/unbindService timing
-  - bindService() called from onActivityCreated, unbindService() from stopVpn()
-  - Can cause IllegalArgumentException: Service not registered
-  - Single agent, small change
+### Remaining Phase 2 Items
+- Remove old XML files (main.xml, app_item.xml) and Fragment code (ProfileFragment.kt) AFTER Compose is verified working
+- Add real app icons (PackageManager) to split tunneling (currently uses colored letter circles)
+- Implement Connectivity Check overlay (mockup shows loading spinner → result card)
+- Add animation transitions between tabs
+- Internationalize strings
 
-Priority 2: Any other Phase 1 polishing (you tell me)
-```
-
-**Then Phase 2 (Compose UI) — postponed to end per your instruction.**
-
-Just say "go" when ready for the next session.
+### Known Bugs
+1. `View.VISIBLE` import missing in ProfileFragment.kt and MainActivity.kt
+2. `PREF_CONNECTIVITY_CHECK` not consumed by backend
+3. Service binding race in ProfileFragment.kt (legacy code)

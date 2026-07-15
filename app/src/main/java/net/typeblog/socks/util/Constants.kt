@@ -40,4 +40,10 @@ object Constants {
     const val PREF_ADV_APP_LIST = "adv_app_list"
     const val PREF_ADV_AUTO_CONNECT = "adv_auto_connect"
     const val PREF_DYNAMIC_COLORS = "dynamic_colors"
+    const val PREF_THEME_MODE = "theme_mode"
+    const val PREF_AUTO_STOP = "auto_stop"
+    const val PREF_CONNECTIVITY_CHECK = "connectivity_check"
+
+    const val INTENT_IP_INFO = INTENT_PREFIX + "IPINFO"
+    const val INTENT_CONNECTED_SINCE = INTENT_PREFIX + "CONNSINCE"
 }

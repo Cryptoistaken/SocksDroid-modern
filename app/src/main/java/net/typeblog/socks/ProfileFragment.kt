@@ -18,8 +18,10 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceManager
 import android.text.TextUtils
 import android.util.Log
+import kotlin.concurrent.thread
 import android.widget.CompoundButton
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 
 import androidx.activity.result.ActivityResultLauncher
@@ -30,6 +32,7 @@ import com.google.android.material.materialswitch.MaterialSwitch
 
 import net.typeblog.socks.util.Profile
 import net.typeblog.socks.util.ProfileManager
+import net.typeblog.socks.util.IpInfo
 import net.typeblog.socks.util.Utility
 import net.typeblog.socks.util.Constants.PREF_ADV_AUTO_CONNECT
 import net.typeblog.socks.util.Constants.PREF_ADV_APP_BYPASS
@@ -41,11 +44,14 @@ import net.typeblog.socks.util.Constants.PREF_ADV_ROUTE
 import net.typeblog.socks.util.Constants.PREF_AUTH_PASSWORD
 import net.typeblog.socks.util.Constants.PREF_AUTH_USERNAME
 import net.typeblog.socks.util.Constants.PREF_AUTH_USERPW
+import net.typeblog.socks.util.Constants.PREF_AUTO_STOP
+import net.typeblog.socks.util.Constants.PREF_CONNECTIVITY_CHECK
 import net.typeblog.socks.util.Constants.PREF_DYNAMIC_COLORS
 import net.typeblog.socks.util.Constants.PREF_IPV6_PROXY
 import net.typeblog.socks.util.Constants.PREF_PROFILE
 import net.typeblog.socks.util.Constants.PREF_SERVER_IP
 import net.typeblog.socks.util.Constants.PREF_SERVER_PORT
+import net.typeblog.socks.util.Constants.PREF_THEME_MODE
 import net.typeblog.socks.util.Constants.PREF_UDP_GW
 import net.typeblog.socks.util.Constants.PREF_UDP_PROXY
 
@@ -86,6 +92,7 @@ class ProfileFragment : PreferenceFragmentCompat(),
     private val mStateRunnable = object : Runnable {
         override fun run() {
             updateState()
+            updateIpDisplay()
             mSwitch?.postDelayed(this, 1000)
         }
     }
@@ -118,6 +125,9 @@ class ProfileFragment : PreferenceFragmentCompat(),
     private lateinit var mPrefUDP: CheckBoxPreference
     private lateinit var mPrefAuto: CheckBoxPreference
     private var mPrefDynamic: CheckBoxPreference? = null
+    private lateinit var mPrefThemeMode: ListPreference
+    private lateinit var mPrefAutoStop: CheckBoxPreference
+    private lateinit var mPrefConnectivityCheck: CheckBoxPreference
     private lateinit var mPrefAdd: Preference
     private lateinit var mPrefDel: Preference
     private lateinit var mPrefAppSelector: Preference
@@ -265,6 +275,20 @@ class ProfileFragment : PreferenceFragmentCompat(),
                 Toast.makeText(requireActivity(), "Restart app to apply theme changes", Toast.LENGTH_SHORT).show()
                 true
             }
+            mPrefThemeMode -> {
+                Toast.makeText(requireActivity(), "Restart app to apply theme changes", Toast.LENGTH_SHORT).show()
+                true
+            }
+            mPrefAutoStop -> {
+                PreferenceManager.getDefaultSharedPreferences(requireActivity())
+                    .edit().putBoolean(PREF_AUTO_STOP, java.lang.Boolean.parseBoolean(newValue.toString())).apply()
+                true
+            }
+            mPrefConnectivityCheck -> {
+                PreferenceManager.getDefaultSharedPreferences(requireActivity())
+                    .edit().putBoolean(PREF_CONNECTIVITY_CHECK, java.lang.Boolean.parseBoolean(newValue.toString())).apply()
+                true
+            }
             else -> false
         }
     }
@@ -324,6 +348,12 @@ class ProfileFragment : PreferenceFragmentCompat(),
         mPrefAuto = findPreference(PREF_ADV_AUTO_CONNECT) as CheckBoxPreference?
             ?: throw IllegalStateException("Missing preference: $PREF_ADV_AUTO_CONNECT")
         mPrefDynamic = findPreference(PREF_DYNAMIC_COLORS) as? CheckBoxPreference
+        mPrefThemeMode = findPreference(PREF_THEME_MODE) as ListPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_THEME_MODE")
+        mPrefAutoStop = findPreference(PREF_AUTO_STOP) as CheckBoxPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_AUTO_STOP")
+        mPrefConnectivityCheck = findPreference(PREF_CONNECTIVITY_CHECK) as CheckBoxPreference?
+            ?: throw IllegalStateException("Missing preference: $PREF_CONNECTIVITY_CHECK")
         mPrefAdd = findPreference("prof_add_btn") as Preference?
             ?: throw IllegalStateException("Missing preference: prof_add_btn")
         mPrefDel = findPreference("prof_del_btn") as Preference?
@@ -349,6 +379,9 @@ class ProfileFragment : PreferenceFragmentCompat(),
         mPrefUDPGW.onPreferenceChangeListener = this
         mPrefAuto.onPreferenceChangeListener = this
         mPrefDynamic?.onPreferenceChangeListener = this
+        mPrefThemeMode.onPreferenceChangeListener = this
+        mPrefAutoStop.onPreferenceChangeListener = this
+        mPrefConnectivityCheck.onPreferenceChangeListener = this
         mPrefAdd.onPreferenceClickListener = this
         mPrefDel.onPreferenceClickListener = this
         mPrefAppSelector.onPreferenceClickListener = this
@@ -376,6 +409,11 @@ class ProfileFragment : PreferenceFragmentCompat(),
 
         mPrefDynamic?.isChecked = PreferenceManager.getDefaultSharedPreferences(requireActivity())
             .getBoolean(PREF_DYNAMIC_COLORS, true)
+
+        val defPrefs = PreferenceManager.getDefaultSharedPreferences(requireActivity())
+        mPrefThemeMode.value = defPrefs.getString(PREF_THEME_MODE, "light")
+        mPrefAutoStop.isChecked = defPrefs.getBoolean(PREF_AUTO_STOP, false)
+        mPrefConnectivityCheck.isChecked = defPrefs.getBoolean(PREF_CONNECTIVITY_CHECK, true)
 
         mPrefServer.text = mProfile!!.getServer()
         mPrefPort.text = mProfile!!.getPort().toString()
@@ -509,6 +547,43 @@ class ProfileFragment : PreferenceFragmentCompat(),
         }
 
         mSwitch?.setOnCheckedChangeListener(this)
+    }
+
+    private fun updateIpDisplay() {
+        val ipStatus = activity?.findViewById<TextView>(R.id.ip_status) ?: return
+
+        if (mRunning && mBinder != null) {
+            try {
+                val proxyIp = mBinder!!.currentIp
+                val proxyCode = mBinder!!.countryCode
+                if (proxyIp.isNotEmpty() && proxyCode.isNotEmpty()) {
+                    val flag = Utility.countryCodeToFlag(proxyCode)
+                    ipStatus.text = "Proxy IP: $flag $proxyCode $proxyIp"
+                    ipStatus.visibility = View.VISIBLE
+                } else {
+                    ipStatus.text = "Connecting..."
+                    ipStatus.visibility = View.VISIBLE
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to get IP info", e)
+            }
+        } else if (!mRunning) {
+            // When disconnected, re-check real IP if we were showing proxy info
+            val currentText = ipStatus.text?.toString() ?: ""
+            if (currentText.startsWith("Proxy IP:") || currentText == "Connecting...") {
+                ipStatus.visibility = View.GONE
+                thread {
+                    val realIpInfo = Utility.checkPublicIp()
+                    activity?.runOnUiThread {
+                        if (realIpInfo != null && !mRunning) {
+                            val flag = Utility.countryCodeToFlag(realIpInfo.countryCode)
+                            ipStatus.text = "Your IP: $flag ${realIpInfo.countryCode} ${realIpInfo.ip}"
+                            ipStatus.visibility = View.VISIBLE
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun startVpn() {
