@@ -570,7 +570,8 @@ private fun TestConnectionButton(
                     val testHost = "google.com"
                     val testPort = 80
                     val testHostBytes = testHost.toByteArray()
-                    val connectReq = ByteArray(6 + testHostBytes.size)
+                    // 7 fixed bytes: VER(1) + CMD(1) + RSV(1) + ATYP(1) + ADDR_LEN(1) + PORT(2)
+                    val connectReq = ByteArray(7 + testHostBytes.size)
                     connectReq[0] = 0x05
                     connectReq[1] = 0x01
                     connectReq[2] = 0x00
