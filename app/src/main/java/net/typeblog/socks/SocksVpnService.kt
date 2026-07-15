@@ -160,11 +160,7 @@ class SocksVpnService : VpnService() {
         showNotification()
 
             // Register notification action receiver
-        if (Build.VERSION.SDK_INT >= 34) {
-            registerReceiver(mNotificationActionReceiver, IntentFilter(ACTION_STOP_VPN), RECEIVER_EXPORTED, null)
-        } else {
-            registerReceiver(mNotificationActionReceiver, IntentFilter(ACTION_STOP_VPN))
-        }
+        registerReceiver(mNotificationActionReceiver, IntentFilter(ACTION_STOP_VPN), null, null)
 
         configure(mProfileName, route, perApp, appBypass, appList, ipv6)
 
