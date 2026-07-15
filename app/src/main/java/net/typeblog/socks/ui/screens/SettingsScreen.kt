@@ -17,21 +17,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -55,13 +56,15 @@ fun SettingsScreen(
     var notificationControl by remember {
         mutableStateOf(prefs.getBoolean(PREF_NOTIFICATION_CONTROL, false))
     }
-    var showThemeDialog by remember { mutableStateOf(false) }
+    var showThemeMenu by remember { mutableStateOf(false) }
 
     val themeLabel = when (themeMode) {
         "dark" -> "Dark"
         "system" -> "System"
         else -> "Light"
     }
+
+    val themeOptions = listOf("light" to "Light", "dark" to "Dark", "system" to "System")
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -90,12 +93,40 @@ fun SettingsScreen(
         item {
             SectionTitle(text = "Appearance")
             SettingsGroup {
-                SettingsItem(
-                    icon = Icons.Outlined.DarkMode,
-                    label = "Theme Mode",
-                    value = themeLabel,
-                    onClick = { showThemeDialog = true }
-                )
+                BoxWithDropdown {
+                    SettingsItem(
+                        icon = Icons.Outlined.DarkMode,
+                        label = "Theme Mode",
+                        value = themeLabel,
+                        onClick = { showThemeMenu = true }
+                    )
+                    DropdownMenu(
+                        expanded = showThemeMenu,
+                        onDismissRequest = { showThemeMenu = false }
+                    ) {
+                        themeOptions.forEach { (value, label) ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(modifier = Modifier.fillMaxWidth()) {
+                                        Text(text = label, modifier = Modifier.weight(1f))
+                                        if (value == themeMode) {
+                                            Icon(
+                                                Icons.Default.Check,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    themeMode = value
+                                    saveString(PREF_THEME_MODE, value)
+                                    showThemeMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -143,18 +174,11 @@ fun SettingsScreen(
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
+}
 
-    if (showThemeDialog) {
-        ThemePickerDialog(
-            currentValue = themeMode,
-            onDismiss = { showThemeDialog = false },
-            onConfirm = { value ->
-                themeMode = value
-                saveString(PREF_THEME_MODE, value)
-                showThemeDialog = false
-            }
-        )
-    }
+@Composable
+private fun BoxWithDropdown(content: @Composable () -> Unit) {
+    androidx.compose.foundation.layout.Box { content() }
 }
 
 @Composable
@@ -177,50 +201,4 @@ private fun SettingsGroup(content: @Composable () -> Unit) {
     ) {
         content()
     }
-}
-
-@Composable
-private fun ThemePickerDialog(
-    currentValue: String,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
-) {
-    val options = listOf("light" to "Light", "dark" to "Dark", "system" to "System")
-    var selected by remember { mutableStateOf(currentValue) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Theme Mode") },
-        text = {
-            Column {
-                options.forEach { (value, label) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f)
-                        )
-                        if (value == selected) {
-                            Text(
-                                text = "\u2713",
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(selected) }) { Text("OK") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        }
-    )
 }

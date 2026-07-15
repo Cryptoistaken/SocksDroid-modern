@@ -10,14 +10,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,9 +46,10 @@ fun ConnectionCard(
     countryCode: String?,
     serverName: String,
     connectedSince: Long,
+    onStartClick: () -> Unit,
+    onStopClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Live duration ticker
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
     LaunchedEffect(isConnected) {
@@ -101,7 +105,6 @@ fun ConnectionCard(
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Shield icon
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -119,15 +122,6 @@ fun ConnectionCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text(
-                text = "Your connection state",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Badge
             val badgeBackground = if (isConnected) {
                 MaterialTheme.colorScheme.surfaceVariant
             } else {
@@ -166,10 +160,8 @@ fun ConnectionCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Info grid
             val infoBackground = MaterialTheme.colorScheme.surfaceVariant
 
-            // Your IP row
             InfoRow(
                 label = "Your IP",
                 value = buildIpDisplay(ip, countryCode),
@@ -179,7 +171,6 @@ fun ConnectionCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Server row
             InfoRow(
                 label = "Server",
                 value = serverName.ifEmpty { "—" },
@@ -188,12 +179,33 @@ fun ConnectionCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Connected since row
             InfoRow(
-                label = "Connected since",
+                label = "Uptime",
                 value = durationFormatted,
                 background = infoBackground
             )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            IconButton(
+                onClick = { if (isConnected) onStopClick() else onStartClick() },
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isConnected) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.primary
+                    ),
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = Color.White
+                )
+            ) {
+                Icon(
+                    imageVector = if (isConnected) Icons.Default.Stop else Icons.Default.PlayArrow,
+                    contentDescription = if (isConnected) "Stop" else "Start",
+                    modifier = Modifier.size(32.dp)
+                )
+            }
         }
     }
 }
