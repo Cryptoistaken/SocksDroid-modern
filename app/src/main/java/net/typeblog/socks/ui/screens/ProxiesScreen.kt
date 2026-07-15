@@ -486,7 +486,9 @@ private fun AddEditProxySheet(
                 }
                 TestConnectionButton(
                     host = host.trim(),
-                    portText = portText.trim()
+                    portText = portText.trim(),
+                    username = username.trim(),
+                    password = password.trim()
                 )
                 Button(
                     onClick = {
@@ -520,31 +522,112 @@ private fun AddEditProxySheet(
 private fun TestConnectionButton(
     host: String,
     portText: String,
+    username: String,
+    password: String,
     modifier: Modifier = Modifier
 ) {
     var testResult by remember { mutableStateOf<String?>(null) }
     var testing by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
 
     OutlinedButton(
         onClick = {
             testing = true
             testResult = null
             val port = portText.toIntOrNull()
-            scope.launch(Dispatchers.IO) {
+            val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+            Thread {
                 val result = try {
                     val socket = java.net.Socket()
                     socket.connect(java.net.InetSocketAddress(host, port ?: 0), 5000)
+                    socket.soTimeout = 5000
+                    val ins = socket.getInputStream()
+                    val outs = socket.getOutputStream()
+
+                    // SOCKS5 auth method negotiation
+                    outs.write(byteArrayOf(0x05, 0x01, 0x02.toByte()))
+                    outs.flush()
+                    val authResp = ByteArray(2)
+                    ins.read(authResp)
+                    if (authResp[0] != 0x05.toByte()) throw Exception("Not a SOCKS5 proxy")
+                    if (authResp[1] == 0xff.toByte()) throw Exception("No acceptable auth method")
+
+                    // Username/password auth (RFC 1929)
+                    if (authResp[1] == 0x02.toByte()) {
+                        val uBytes = username.toByteArray()
+                        val pBytes = password.toByteArray()
+                        val authReq = ByteArray(3 + uBytes.size + pBytes.size)
+                        authReq[0] = 0x01
+                        authReq[1] = uBytes.size.toByte()
+                        System.arraycopy(uBytes, 0, authReq, 2, uBytes.size)
+                        authReq[2 + uBytes.size] = pBytes.size.toByte()
+                        System.arraycopy(pBytes, 0, authReq, 3 + uBytes.size, pBytes.size)
+                        outs.write(authReq)
+                        outs.flush()
+                        val authResp2 = ByteArray(2)
+                        ins.read(authResp2)
+                        if (authResp2[1] != 0x00.toByte()) throw Exception("Auth failed")
+                    }
+
+                    // CONNECT to a test target
+                    val testHost = "google.com"
+                    val testPort = 80
+                    val testHostBytes = testHost.toByteArray()
+                    val connectReq = ByteArray(6 + testHostBytes.size)
+                    connectReq[0] = 0x05
+                    connectReq[1] = 0x01
+                    connectReq[2] = 0x00
+                    connectReq[3] = 0x03
+                    connectReq[4] = testHostBytes.size.toByte()
+                    System.arraycopy(testHostBytes, 0, connectReq, 5, testHostBytes.size)
+                    connectReq[5 + testHostBytes.size] = (testPort shr 8).toByte()
+                    connectReq[6 + testHostBytes.size] = testPort.toByte()
+                    outs.write(connectReq)
+                    outs.flush()
+                    val connectResp = ByteArray(4)
+                    ins.read(connectResp)
+                    if (connectResp[1] != 0x00.toByte()) {
+                        val errCodes = mapOf(
+                            0x01 to "General SOCKS failure",
+                            0x02 to "Connection not allowed",
+                            0x03 to "Network unreachable",
+                            0x04 to "Host unreachable",
+                            0x05 to "Connection refused",
+                            0x06 to "TTL expired",
+                            0x07 to "Command not supported",
+                            0x08 to "Address not supported"
+                        )
+                        val errMsg = errCodes[connectResp[1].toInt()] ?: "Error code ${connectResp[1].toInt()}"
+                        throw Exception(errMsg)
+                    }
+                    // Consume the rest of the SOCKS response (BND.ADDR + BND.PORT)
+                    val addrType = connectResp[3]
+                    val remaining = when (addrType.toInt()) {
+                        0x01 -> 4 + 2
+                        0x04 -> 16 + 2
+                        0x03 -> {
+                            val lenByte = ByteArray(1)
+                            ins.read(lenByte)
+                            1 + lenByte[0].toInt() + 2
+                        }
+                        else -> throw Exception("Unknown address type")
+                    }
+                    var skipped = 0
+                    while (skipped < remaining) {
+                        val n = ins.read(ByteArray(remaining - skipped))
+                        if (n < 0) throw Exception("Connection closed")
+                        skipped += n
+                    }
                     socket.close()
-                    "✓ Connected"
+                    "✓ Proxy works"
                 } catch (e: Exception) {
-                    "✗ ${e.message?.take(40) ?: "Failed"}"
+                    val msg = e.message ?: "Failed"
+                    if (msg.length > 50) "✗ ${msg.take(50)}" else "✗ $msg"
                 }
-                withContext(Dispatchers.Main) {
+                mainHandler.post {
                     testResult = result
                     testing = false
                 }
-            }
+            }.start()
         },
         enabled = host.isNotEmpty() && portText.toIntOrNull() != null && !testing,
         modifier = modifier,
