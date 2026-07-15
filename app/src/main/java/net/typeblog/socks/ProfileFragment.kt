@@ -18,6 +18,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceManager
 import android.text.TextUtils
 import android.util.Log
+import android.view.View
 import kotlin.concurrent.thread
 import android.widget.CompoundButton
 import android.widget.EditText

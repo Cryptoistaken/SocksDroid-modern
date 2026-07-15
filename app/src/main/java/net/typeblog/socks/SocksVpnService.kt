@@ -168,7 +168,7 @@ class SocksVpnService : VpnService() {
             start(mInterface!!.fd, server, port, username, passwd, dns, dnsPort, ipv6, udpgw)
 
         if (mRunning) {
-            mConnectedSince = System.currentTimeMillis()
+            mConnectedSince = java.lang.System.currentTimeMillis()
             mIpCheckHandler.post(mIpCheckRunnable)
 
             val prefs = PreferenceManager.getDefaultSharedPreferences(this)

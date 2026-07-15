@@ -2,7 +2,7 @@ package net.typeblog.socks.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Globe
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BottomAppBar
@@ -40,7 +40,7 @@ private data class BottomNavItem(
 )
 
 private val bottomNavItems = listOf(
-    BottomNavItem(Screen.Proxies, Icons.Filled.Globe, "Proxies"),
+    BottomNavItem(Screen.Proxies, Icons.Filled.Language, "Proxies"),
     BottomNavItem(Screen.Status, Icons.Filled.Security, "Status"),
     BottomNavItem(Screen.Settings, Icons.Filled.Settings, "Settings")
 )

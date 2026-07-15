@@ -117,8 +117,8 @@ fun ProxiesScreen(
                     val profile = remember(profileName) { pm.getProfile(profileName) }
                     ProxyCard(
                         profileName = profileName,
-                        server = profile?.server ?: "",
-                        port = profile?.port ?: 0,
+                        server = profile?.getServer() ?: "",
+                        port = profile?.getPort() ?: 0,
                         isConnected = isRunning && activeProfileName == profileName,
                         onClick = { selectedProfile = profileName }
                     )
@@ -250,11 +250,11 @@ private fun ProxyDetailSheet(
 
             // Detail rows
             DetailRow(label = "Profile", value = profileName)
-            DetailRow(label = "Host", value = profile?.server ?: "")
-            DetailRow(label = "Port", value = profile?.port?.toString() ?: "")
+            DetailRow(label = "Host", value = profile?.getServer() ?: "")
+            DetailRow(label = "Port", value = profile?.getPort()?.toString() ?: "")
             DetailRow(
                 label = "Auth",
-                value = if (profile?.isUserPw == true) "Username + Password" else "None"
+                value = if (profile?.isUserPw() == true) "Username + Password" else "None"
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -341,12 +341,12 @@ private fun AddEditProxySheet(
                 val pm = ProfileManager.getInstance(context)
                 val profile = pm.getProfile(profileName)
                 if (profile != null) {
-                    name = profile.name
-                    host = profile.server
-                    portText = profile.port.toString()
-                    authType = if (profile.isUserPw) "password" else "none"
-                    username = profile.username
-                    password = profile.password
+                    name = profile.getName()
+                    host = profile.getServer()
+                    portText = profile.getPort().toString()
+                    authType = if (profile.isUserPw()) "password" else "none"
+                    username = profile.getUsername()
+                    password = profile.getPassword()
                 }
             } catch (_: Exception) {
                 // Ignore
@@ -635,19 +635,19 @@ private fun saveProfile(
         if (profileName != null) {
             // Edit existing profile
             val profile = pm.getProfile(profileName) ?: return
-            profile.server = host
-            profile.port = port
+            profile.setServer(host)
+            profile.setPort(port)
             profile.setIsUserpw(authType == "password")
-            profile.username = username
-            profile.password = password
+            profile.setUsername(username)
+            profile.setPassword(password)
         } else {
             // Add new profile
             val profile = pm.addProfile(newName) ?: return
-            profile.server = host
-            profile.port = port
+            profile.setServer(host)
+            profile.setPort(port)
             profile.setIsUserpw(authType == "password")
-            profile.username = username
-            profile.password = password
+            profile.setUsername(username)
+            profile.setPassword(password)
         }
     } catch (_: Exception) {
         // Ignore

@@ -174,7 +174,7 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
         return try {
             val pm = ProfileManager.getInstance(app)
             val profile = pm.getProfile(profileName) ?: return ""
-            "${profile.server}:${profile.port}"
+            "${profile.getServer()}:${profile.getPort()}"
         } catch (_: Exception) {
             ""
         }

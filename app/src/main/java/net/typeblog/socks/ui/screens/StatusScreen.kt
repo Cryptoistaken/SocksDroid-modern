@@ -44,7 +44,7 @@ fun StatusScreen(
             try {
                 val pm = ProfileManager.getInstance(context)
                 val p = pm.getProfile(activeProfileName!!)
-                if (p != null) "${p.server}:${p.port}" else ""
+                if (p != null) "${p.getServer()}:${p.getPort()}" else ""
             } catch (_: Exception) {
                 ""
             }
