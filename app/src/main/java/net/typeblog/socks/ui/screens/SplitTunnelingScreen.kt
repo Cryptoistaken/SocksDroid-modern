@@ -50,7 +50,8 @@ import net.typeblog.socks.util.Constants.PREF_ADV_APP_LIST
  */
 private data class InstalledApp(
     val name: String,
-    val packageName: String
+    val packageName: String,
+    val icon: android.graphics.drawable.Drawable?
 )
 
 /**
@@ -88,7 +89,8 @@ fun SplitTunnelingScreen(
             .map {
                 InstalledApp(
                     name = it.loadLabel(packageManager).toString(),
-                    packageName = it.packageName
+                    packageName = it.packageName,
+                    icon = it.loadIcon(packageManager)
                 )
             }
             .sortedBy { it.name.lowercase() }
@@ -216,7 +218,8 @@ fun SplitTunnelingScreen(
                                 prefs.edit()
                                     .putString(PREF_ADV_APP_LIST, updatedList)
                                     .apply()
-                            }
+                            },
+                            icon = app.icon
                         )
                         HorizontalDivider(
                             thickness = 0.5.dp,

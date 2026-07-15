@@ -1,5 +1,7 @@
 package net.typeblog.socks.ui.components
 
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,14 +13,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,6 +60,7 @@ fun AppToggleItem(
     packageName: String,
     isAllowed: Boolean,
     onToggle: (Boolean) -> Unit,
+    icon: Drawable? = null,
     modifier: Modifier = Modifier
 ) {
     val colorIndex = kotlin.math.abs(packageName.hashCode()) % AppColors.size
@@ -67,20 +74,40 @@ fun AppToggleItem(
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Colored circle with first letter of app name
+        // Colored circle with first letter of app name OR actual app icon
         Box(
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(appColor),
+                .background(if (icon != null) Color.Transparent else appColor),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = firstLetter,
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
+            if (icon != null) {
+                val bitmap = remember(icon) {
+                    val bmp = Bitmap.createBitmap(
+                        icon.intrinsicWidth.coerceAtLeast(1),
+                        icon.intrinsicHeight.coerceAtLeast(1),
+                        Bitmap.Config.ARGB_8888
+                    )
+                    val canvas = android.graphics.Canvas(bmp)
+                    icon.setBounds(0, 0, canvas.width, canvas.height)
+                    icon.draw(canvas)
+                    bmp
+                }
+                Icon(
+                    painter = BitmapPainter(bitmap.asImageBitmap()),
+                    contentDescription = appName,
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.Unspecified
+                )
+            } else {
+                Text(
+                    text = firstLetter,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(10.dp))
