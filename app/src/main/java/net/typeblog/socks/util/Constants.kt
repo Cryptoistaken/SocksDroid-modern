@@ -46,4 +46,8 @@ object Constants {
 
     const val INTENT_IP_INFO = INTENT_PREFIX + "IPINFO"
     const val INTENT_CONNECTED_SINCE = INTENT_PREFIX + "CONNSINCE"
+
+    const val PREF_NOTIFICATION_CONTROL = "notification_control"
+    const val ACTION_STOP_VPN = "net.typeblog.socks.STOP_VPN"
+    const val ACTION_START_VPN = "net.typeblog.socks.START_VPN"
 }

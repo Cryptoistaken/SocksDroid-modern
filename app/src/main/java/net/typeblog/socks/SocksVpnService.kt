@@ -3,8 +3,10 @@ package net.typeblog.socks
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Context.RECEIVER_EXPORTED
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo
@@ -21,8 +23,7 @@ import android.util.Log
 import androidx.preference.PreferenceManager
 import net.typeblog.socks.R
 import net.typeblog.socks.util.Constants
-import net.typeblog.socks.util.Routes
-import net.typeblog.socks.util.Utility
+import net.typeblog.socks.util.Constants.ACTION_STOP_VPN
 import net.typeblog.socks.util.Constants.INTENT_APP_BYPASS
 import net.typeblog.socks.util.Constants.INTENT_APP_LIST
 import net.typeblog.socks.util.Constants.INTENT_DNS
@@ -37,6 +38,9 @@ import net.typeblog.socks.util.Constants.INTENT_SERVER
 import net.typeblog.socks.util.Constants.INTENT_UDP_GW
 import net.typeblog.socks.util.Constants.INTENT_USERNAME
 import net.typeblog.socks.util.Constants.PREF_AUTO_STOP
+import net.typeblog.socks.util.Constants.PREF_NOTIFICATION_CONTROL
+import net.typeblog.socks.util.Routes
+import net.typeblog.socks.util.Utility
 import net.typeblog.socks.BuildConfig.DEBUG
 
 class SocksVpnService : VpnService() {
@@ -65,6 +69,7 @@ class SocksVpnService : VpnService() {
     private var mInterface: ParcelFileDescriptor? = null
     private var mRunning = false
     private val mBinder: IBinder = VpnBinder()
+    private var mProfileName: String? = null
 
     private var mCurrentIp: String? = null
     private var mCountryCode: String? = null
@@ -76,6 +81,12 @@ class SocksVpnService : VpnService() {
                 Log.d(TAG, "Screen off received, auto-stopping VPN")
                 stopMe()
             }
+        }
+    }
+    private val mNotificationUpdater = object : Runnable {
+        override fun run() {
+            updateNotification()
+            mIpCheckHandler.postDelayed(this, 1000)
         }
     }
     private val mIpCheckRunnable = object : Runnable {
@@ -92,6 +103,14 @@ class SocksVpnService : VpnService() {
                 }
             }.start()
             mIpCheckHandler.postDelayed(this, 30000)
+        }
+    }
+
+    private val mNotificationActionReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                ACTION_STOP_VPN -> stopMe()
+            }
         }
     }
 
@@ -122,7 +141,7 @@ class SocksVpnService : VpnService() {
             return 0
         }
 
-        val name = intent.getStringExtra(INTENT_NAME)
+        mProfileName = intent.getStringExtra(INTENT_NAME)
         val server = intent.getStringExtra(INTENT_SERVER)
         val port = intent.getIntExtra(INTENT_PORT, 1080)
         val username = intent.getStringExtra(INTENT_USERNAME)
@@ -136,30 +155,18 @@ class SocksVpnService : VpnService() {
         val ipv6 = intent.getBooleanExtra(INTENT_IPV6_PROXY, false)
         val udpgw = intent.getStringExtra(INTENT_UDP_GW)
 
-        // Create the notification channel
         createNotificationChannel()
 
-        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, "vpn_service")
-        } else {
-            Notification.Builder(this)
-        }
+        showNotification()
 
-        val notification = builder
-            .setContentTitle(getString(R.string.notify_title))
-            .setContentText(String.format(getString(R.string.notify_msg), name))
-            .setPriority(Notification.PRIORITY_MIN)
-            .setSmallIcon(R.drawable.ic_launcher)
-            .build()
-
+            // Register notification action receiver
         if (Build.VERSION.SDK_INT >= 34) {
-            startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            registerReceiver(mNotificationActionReceiver, IntentFilter(ACTION_STOP_VPN), RECEIVER_EXPORTED, null)
         } else {
-            startForeground(1, notification)
+            registerReceiver(mNotificationActionReceiver, IntentFilter(ACTION_STOP_VPN))
         }
 
-        // Create an fd.
-        configure(name, route, perApp, appBypass, appList, ipv6)
+        configure(mProfileName, route, perApp, appBypass, appList, ipv6)
 
         if (DEBUG)
             Log.d(TAG, "fd: ${mInterface?.fd}")
@@ -170,6 +177,7 @@ class SocksVpnService : VpnService() {
         if (mRunning) {
             mConnectedSince = java.lang.System.currentTimeMillis()
             mIpCheckHandler.post(mIpCheckRunnable)
+            mIpCheckHandler.post(mNotificationUpdater)
 
             val prefs = PreferenceManager.getDefaultSharedPreferences(this)
             if (prefs.getBoolean(PREF_AUTO_STOP, false)) {
@@ -214,20 +222,100 @@ class SocksVpnService : VpnService() {
             Log.e(TAG, "Error: ${e.message}", e)
         }
 
+        mProfileName = null
         mCurrentIp = null
         mCountryCode = null
         mConnectedSince = 0L
         mRunning = false
 
         mIpCheckHandler.removeCallbacks(mIpCheckRunnable)
+        mIpCheckHandler.removeCallbacks(mNotificationUpdater)
+
+        try {
+            unregisterReceiver(mNotificationActionReceiver)
+        } catch (_: Exception) { }
 
         try {
             unregisterReceiver(mScreenOffReceiver)
-        } catch (e: Exception) {
-            // Receiver may not have been registered
-        }
+        } catch (e: Exception) { }
 
         stopSelf()
+    }
+
+    private fun showNotification() {
+        val stopIntent = Intent(ACTION_STOP_VPN).apply {
+            setPackage(packageName)
+        }
+        val stopPendingIntent = PendingIntent.getBroadcast(
+            this, 0, stopIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, "vpn_service")
+        } else {
+            Notification.Builder(this)
+        }
+
+        val notification = builder
+            .setContentTitle(getString(R.string.notify_title))
+            .setContentText(formatElapsed())
+            .setSmallIcon(R.drawable.ic_launcher)
+            .addAction(android.R.drawable.ic_media_pause, "Stop", stopPendingIntent)
+            .build()
+
+        if (Build.VERSION.SDK_INT >= 34) {
+            startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        } else {
+            startForeground(1, notification)
+        }
+    }
+
+    private fun updateNotification() {
+        if (!mRunning) return
+
+        val stopIntent = Intent(ACTION_STOP_VPN).apply { setPackage(packageName) }
+        val stopPendingIntent = PendingIntent.getBroadcast(
+            this, 0, stopIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, "vpn_service")
+        } else {
+            Notification.Builder(this)
+        }
+
+        val ipText = if (!mCurrentIp.isNullOrEmpty()) {
+            "IP: $mCurrentIp"
+        } else {
+            "Connecting..."
+        }
+
+        val notification = builder
+            .setContentTitle(getString(R.string.notify_title))
+            .setContentText("$ipText  |  ${formatElapsed()}")
+            .setSmallIcon(R.drawable.ic_launcher)
+            .setOngoing(true)
+            .addAction(android.R.drawable.ic_media_pause, "Stop", stopPendingIntent)
+            .build()
+
+        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(1, notification)
+    }
+
+    private fun formatElapsed(): String {
+        if (mConnectedSince <= 0L) return getString(R.string.notify_msg, mProfileName ?: "")
+        val diff = java.lang.System.currentTimeMillis() - mConnectedSince
+        val totalSeconds = diff / 1000
+        val hours = totalSeconds / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val seconds = totalSeconds % 60
+        return when {
+            hours > 0 -> String.format("%dh %02dm %02ds", hours, minutes, seconds)
+            minutes > 0 -> String.format("%dm %02ds", minutes, seconds)
+            else -> String.format("%ds", seconds)
+        }
     }
 
     private fun configure(name: String?, route: String?, perApp: Boolean, bypass: Boolean, apps: Array<String>?, ipv6: Boolean) {
@@ -238,21 +326,15 @@ class SocksVpnService : VpnService() {
             .addDnsServer("8.8.8.8")
 
         if (ipv6) {
-            // Route all IPv6 traffic
             b.addAddress("fdfe:dcba:9876::1", 126)
                 .addRoute("::", 0)
         }
 
         Routes.addRoutes(this, b, route ?: "all")
 
-        // Add the default DNS
-        // Note that this DNS is just a stub.
-        // Actual DNS requests will be redirected through pdnsd.
         b.addRoute("8.8.8.8", 32)
 
-        // Do app routing
         if (!perApp) {
-            // Just bypass myself
             try {
                 b.addDisallowedApplication("net.typeblog.socks")
             } catch (e: Exception) {
@@ -260,17 +342,13 @@ class SocksVpnService : VpnService() {
             }
         } else {
             if (bypass) {
-                // First, bypass myself
                 try {
                     b.addDisallowedApplication("net.typeblog.socks")
                 } catch (e: Exception) {
                     Log.e(TAG, "Error: ${e.message}", e)
                 }
-
                 for (p in apps!!) {
-                    if (TextUtils.isEmpty(p))
-                        continue
-
+                    if (TextUtils.isEmpty(p)) continue
                     try {
                         b.addDisallowedApplication(p.trim { it <= ' ' })
                     } catch (e: Exception) {
@@ -279,10 +357,7 @@ class SocksVpnService : VpnService() {
                 }
             } else {
                 for (p in apps!!) {
-                    if (TextUtils.isEmpty(p) || p.trim { it <= ' ' } == "net.typeblog.socks") {
-                        continue
-                    }
-
+                    if (TextUtils.isEmpty(p) || p.trim { it <= ' ' } == "net.typeblog.socks") continue
                     try {
                         b.addAllowedApplication(p.trim { it <= ' ' })
                     } catch (e: Exception) {
@@ -296,7 +371,6 @@ class SocksVpnService : VpnService() {
     }
 
     private fun start(fd: Int, server: String?, port: Int, user: String?, passwd: String?, dns: String?, dnsPort: Int, ipv6: Boolean, udpgw: String?) {
-        // Start DNS daemon first
         Utility.makePdnsdConf(this, dns ?: "8.8.8.8", dnsPort)
 
         val libDir = applicationInfo.nativeLibraryDir
@@ -350,16 +424,13 @@ class SocksVpnService : VpnService() {
             return
         }
 
-        // Try to send the Fd through socket.
         var i = 0
         while (i < 5) {
             if (System.sendfd(fd) != -1) {
                 mRunning = true
                 return
             }
-
             i++
-
             try {
                 Thread.sleep((1000 * i).toLong())
             } catch (e: Exception) {
@@ -367,7 +438,6 @@ class SocksVpnService : VpnService() {
             }
         }
 
-        // Should not get here. Must be a failure.
         stopMe()
     }
 

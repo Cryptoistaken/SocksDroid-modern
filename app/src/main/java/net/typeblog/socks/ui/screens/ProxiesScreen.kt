@@ -48,7 +48,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.typeblog.socks.ui.components.ProxyCard
 import net.typeblog.socks.ui.components.VpnButton
 import net.typeblog.socks.ui.viewmodel.VpnViewModel
@@ -469,23 +471,23 @@ private fun AddEditProxySheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Buttons
+            // Cancel / Test / Save buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TextButton(
                     onClick = {
-                        scope.launch {
-                            sheetState.hide()
-                            onDismiss()
-                        }
+                        scope.launch { sheetState.hide(); onDismiss() }
                     },
-                    modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                TestConnectionButton(
+                    host = host.trim(),
+                    portText = portText.trim()
+                )
                 Button(
                     onClick = {
                         saveProfile(
@@ -502,7 +504,6 @@ private fun AddEditProxySheet(
                             onSaved()
                         }
                     },
-                    modifier = Modifier.weight(1f),
                     enabled = allValid,
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -511,6 +512,57 @@ private fun AddEditProxySheet(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun TestConnectionButton(
+    host: String,
+    portText: String,
+    modifier: Modifier = Modifier
+) {
+    var testResult by remember { mutableStateOf<String?>(null) }
+    var testing by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    OutlinedButton(
+        onClick = {
+            testing = true
+            testResult = null
+            val port = portText.toIntOrNull()
+            scope.launch(Dispatchers.IO) {
+                val result = try {
+                    val socket = java.net.Socket()
+                    socket.connect(java.net.InetSocketAddress(host, port ?: 0), 5000)
+                    socket.close()
+                    "✓ Connected"
+                } catch (e: Exception) {
+                    "✗ ${e.message?.take(40) ?: "Failed"}"
+                }
+                withContext(Dispatchers.Main) {
+                    testResult = result
+                    testing = false
+                }
+            }
+        },
+        enabled = host.isNotEmpty() && portText.toIntOrNull() != null && !testing,
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+    ) {
+        if (testing) {
+            Text("Testing...", fontSize = 13.sp)
+        } else {
+            Text(
+                text = testResult ?: "Test Connection",
+                fontSize = 13.sp,
+                color = when {
+                    testResult?.startsWith("✓") == true -> MaterialTheme.colorScheme.tertiary
+                    testResult?.startsWith("✗") == true -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurface
+                }
+            )
         }
     }
 }
