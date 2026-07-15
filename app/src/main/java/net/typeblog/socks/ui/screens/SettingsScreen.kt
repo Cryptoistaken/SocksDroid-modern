@@ -49,7 +49,6 @@ import net.typeblog.socks.util.Constants.PREF_ADV_AUTO_CONNECT
 import net.typeblog.socks.util.Constants.PREF_ADV_DNS
 import net.typeblog.socks.util.Constants.PREF_ADV_DNS_PORT
 import net.typeblog.socks.util.Constants.PREF_ADV_ROUTE
-import net.typeblog.socks.util.Constants.PREF_AUTO_STOP
 import net.typeblog.socks.util.Constants.PREF_CONNECTIVITY_CHECK
 import net.typeblog.socks.util.Constants.PREF_DYNAMIC_COLORS
 import net.typeblog.socks.util.Constants.PREF_IPV6_PROXY
@@ -99,10 +98,6 @@ fun SettingsScreen(
     var dnsPort by remember {
         mutableStateOf(prefs.getInt(PREF_ADV_DNS_PORT, 53))
     }
-    var autoStop by remember {
-        mutableStateOf(prefs.getBoolean(PREF_AUTO_STOP, false))
-    }
-
     // ── Dialog state ──
     var showThemeDialog by remember { mutableStateOf(false) }
     var showRouteDialog by remember { mutableStateOf(false) }
@@ -254,29 +249,6 @@ fun SettingsScreen(
                     label = "DNS Server",
                     value = dnsDisplay,
                     onClick = { showDnsDialog = true }
-                )
-            }
-        }
-
-        // ════════════════════════════════════════════════════════════════
-        // Advanced
-        // ════════════════════════════════════════════════════════════════
-        item {
-            SectionTitle(text = "Advanced")
-            SettingsGroup {
-                SettingsItem(
-                    icon = Icons.Outlined.Lock,
-                    label = "Auto-stop on screen off",
-                    description = "Stop VPN when screen turns off",
-                    trailing = {
-                        Switch(
-                            checked = autoStop,
-                            onCheckedChange = {
-                                autoStop = it
-                                saveBoolean(PREF_AUTO_STOP, it)
-                            }
-                        )
-                    }
                 )
             }
         }

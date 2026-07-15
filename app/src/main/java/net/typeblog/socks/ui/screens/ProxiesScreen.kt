@@ -21,10 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -347,10 +344,8 @@ private fun AddEditProxySheet(
     var name by remember { mutableStateOf(profileName ?: "") }
     var host by remember { mutableStateOf("") }
     var portText by remember { mutableStateOf("") }
-    var authType by remember { mutableStateOf("none") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var authDropdownExpanded by remember { mutableStateOf(false) }
 
     // Load existing profile data for editing
     LaunchedEffect(profileName) {
@@ -362,7 +357,6 @@ private fun AddEditProxySheet(
                     name = profile.getName()
                     host = profile.getServer()
                     portText = profile.getPort().toString()
-                    authType = if (profile.isUserPw()) "password" else "none"
                     username = profile.getUsername()
                     password = profile.getPassword()
                 }
@@ -375,8 +369,8 @@ private fun AddEditProxySheet(
     // Validation
     val hostValid = host.trim().isNotEmpty()
     val portValid = portText.trim().toIntOrNull()?.let { it in 1..65535 } ?: false
-    val userValid = if (authType == "password") username.trim().isNotEmpty() else true
-    val passValid = if (authType == "password") password.trim().isNotEmpty() else true
+    val userValid = true
+    val passValid = true
     val allValid = hostValid && portValid && userValid && passValid && name.trim().isNotEmpty()
 
     ModalBottomSheet(
@@ -428,69 +422,23 @@ private fun AddEditProxySheet(
                 keyboardType = KeyboardType.Number
             )
 
-            // Auth Type dropdown
-            Text(
-                text = "Auth Type",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 14.dp, bottom = 4.dp)
+            // Auth fields
+            FormFieldWithValidation(
+                label = "Username",
+                value = username,
+                onValueChange = { username = it },
+                placeholder = "Username",
+                isValid = userValid,
+                showValidation = username.isNotEmpty()
             )
-            ExposedDropdownMenuBox(
-                expanded = authDropdownExpanded,
-                onExpandedChange = { authDropdownExpanded = it }
-            ) {
-                OutlinedTextField(
-                    value = if (authType == "password") "Username + Password" else "None",
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = authDropdownExpanded) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(),
-                    shape = RoundedCornerShape(8.dp),
-                    singleLine = true
-                )
-                ExposedDropdownMenu(
-                    expanded = authDropdownExpanded,
-                    onDismissRequest = { authDropdownExpanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("None") },
-                        onClick = {
-                            authType = "none"
-                            authDropdownExpanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Username + Password") },
-                        onClick = {
-                            authType = "password"
-                            authDropdownExpanded = false
-                        }
-                    )
-                }
-            }
-
-            // Conditional auth fields
-            if (authType == "password") {
-                FormFieldWithValidation(
-                    label = "Username",
-                    value = username,
-                    onValueChange = { username = it },
-                    placeholder = "Username",
-                    isValid = userValid,
-                    showValidation = username.isNotEmpty()
-                )
-                FormFieldWithValidation(
-                    label = "Password",
-                    value = password,
-                    onValueChange = { password = it },
-                    placeholder = "Password",
-                    isValid = passValid,
-                    showValidation = password.isNotEmpty()
-                )
-            }
+            FormFieldWithValidation(
+                label = "Password",
+                value = password,
+                onValueChange = { password = it },
+                placeholder = "Password",
+                isValid = passValid,
+                showValidation = password.isNotEmpty()
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -546,7 +494,6 @@ private fun AddEditProxySheet(
                             newName = name.trim(),
                             host = host.trim(),
                             portText = portText.trim(),
-                            authType = authType,
                             username = username.trim(),
                             password = password.trim()
                         )
@@ -642,7 +589,6 @@ private fun saveProfile(
     newName: String,
     host: String,
     portText: String,
-    authType: String,
     username: String,
     password: String
 ) {
@@ -655,7 +601,7 @@ private fun saveProfile(
             val profile = pm.getProfile(profileName) ?: return
             profile.setServer(host)
             profile.setPort(port)
-            profile.setIsUserpw(authType == "password")
+            profile.setIsUserpw(true)
             profile.setUsername(username)
             profile.setPassword(password)
         } else {
@@ -663,7 +609,7 @@ private fun saveProfile(
             val profile = pm.addProfile(newName) ?: return
             profile.setServer(host)
             profile.setPort(port)
-            profile.setIsUserpw(authType == "password")
+            profile.setIsUserpw(true)
             profile.setUsername(username)
             profile.setPassword(password)
         }

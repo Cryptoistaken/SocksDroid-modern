@@ -8,7 +8,13 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.SideEffect
+import android.content.SharedPreferences
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
@@ -52,8 +58,21 @@ private val DarkColorScheme = darkColorScheme(
 fun KiloProxyTheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
     val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-    val themeMode = prefs.getString(PREF_THEME_MODE, "light") ?: "light"
-    val dynamicColorsEnabled = prefs.getBoolean(PREF_DYNAMIC_COLORS, true)
+    var themeMode by remember { mutableStateOf(prefs.getString(PREF_THEME_MODE, "light") ?: "light") }
+    var dynamicColorsEnabled by remember { mutableStateOf(prefs.getBoolean(PREF_DYNAMIC_COLORS, true)) }
+
+    DisposableEffect(context) {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            when (key) {
+                PREF_THEME_MODE -> themeMode = prefs.getString(PREF_THEME_MODE, "light") ?: "light"
+                PREF_DYNAMIC_COLORS -> dynamicColorsEnabled = prefs.getBoolean(PREF_DYNAMIC_COLORS, true)
+            }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        onDispose {
+            prefs.unregisterOnSharedPreferenceChangeListener(listener)
+        }
+    }
 
     val useDarkTheme = when (themeMode) {
         "dark" -> true
