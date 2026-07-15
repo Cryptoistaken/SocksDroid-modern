@@ -1,14 +1,17 @@
 package net.typeblog.socks.ui.screens
 
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +26,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,6 +52,15 @@ fun StatusScreen(
 
     Log.d("KiloProxyScreen", "StatusScreen isRunning=$isRunning profiles=${profiles.size}")
 
+    // VPN permission launcher
+    val vpnPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            viewModel.onVpnPermissionResult(context)
+        }
+    }
+
     // Determine server name from active profile or default
     val serverName = remember(activeProfileName, profiles) {
         if (activeProfileName != null) {
@@ -70,21 +83,28 @@ fun StatusScreen(
             .padding(horizontal = 16.dp)
             .padding(top = 8.dp)
     ) {
-        // KiloProxy logo – theme-aware (dark logo on light bg, white logo on dark bg)
+        // KiloProxy header – logo left + "KiloProxy" text
         val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
         val logoSrc = if (isDarkTheme) R.drawable.logo_dark else R.drawable.logo_light
 
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 24.dp),
-            contentAlignment = Alignment.Center
+                .padding(vertical = 16.dp, horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
                 painter = painterResource(id = logoSrc),
                 contentDescription = "KiloProxy",
-                modifier = Modifier.height(72.dp),
+                modifier = Modifier.height(40.dp),
                 contentScale = ContentScale.Fit
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "KiloProxy",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -115,13 +135,16 @@ fun StatusScreen(
         } else {
             VpnButton(
                 isRunning = isRunning,
-                onStart = {
-                    // Use the active profile, or default to first profile
-                    val targetProfile = activeProfileName ?: profiles.firstOrNull()
-                    if (targetProfile != null) {
-                        viewModel.startVpn(context, targetProfile)
-                    }
-                },
+                    onStart = {
+                        // Use the active profile, or default to first profile
+                        val targetProfile = activeProfileName ?: profiles.firstOrNull()
+                        if (targetProfile != null) {
+                            val intent = viewModel.prepareAndStartVpn(context, targetProfile)
+                            if (intent != null) {
+                                vpnPermissionLauncher.launch(intent)
+                            }
+                        }
+                    },
                 onStop = {
                     viewModel.stopVpn(context)
                 },

@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.net.VpnService
 import android.os.IBinder
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
@@ -46,6 +47,8 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _activeProfileName = MutableStateFlow<String?>(null)
     val activeProfileName: StateFlow<String?> = _activeProfileName.asStateFlow()
+
+    private var _pendingProfile = MutableStateFlow<String?>(null)
 
     private var vpnService: IVpnService? = null
     private var bound = false
@@ -181,6 +184,31 @@ class VpnViewModel(application: Application) : AndroidViewModel(application) {
                 Log.w("KiloProxyVM", "stopVpn: service not bound")
             }
         }
+    }
+
+    /**
+     * Prepare VPN connection: if VPN permission is already granted, start directly;
+     * otherwise store the pending profile and return the permission intent for the caller to launch.
+     */
+    fun prepareAndStartVpn(context: Context, profileName: String): Intent? {
+        val intent = VpnService.prepare(context)
+        if (intent == null) {
+            // Permission already granted — start directly
+            startVpn(context, profileName)
+            return null
+        }
+        _pendingProfile.value = profileName
+        return intent
+    }
+
+    /**
+     * Called after the user grants (or dismisses) the VPN permission dialog.
+     * If permission was granted (RESULT_OK already checked by caller), starts the pending profile.
+     */
+    fun onVpnPermissionResult(context: Context) {
+        val profile = _pendingProfile.value ?: return
+        _pendingProfile.value = null
+        startVpn(context, profile)
     }
 
     fun getProfileIpInfo(profileName: String): String {

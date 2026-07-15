@@ -19,7 +19,6 @@ import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.NetworkCheck
 import androidx.compose.material.icons.outlined.Palette
@@ -169,12 +168,6 @@ fun SettingsScreen(
                             }
                         )
                     }
-                )
-                SettingsItem(
-                    icon = Icons.Outlined.Language,
-                    label = "Language",
-                    value = "English",
-                    onClick = { /* placeholder — i18n is a stretch goal */ }
                 )
             }
         }

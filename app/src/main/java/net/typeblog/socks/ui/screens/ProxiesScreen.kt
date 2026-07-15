@@ -1,6 +1,8 @@
 package net.typeblog.socks.ui.screens
 
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -197,6 +199,14 @@ private fun ProxyDetailSheet(
     val pm = remember { ProfileManager.getInstance(context) }
     val profile = remember(profileName) { pm.getProfile(profileName) }
 
+    val vpnPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            viewModel.onVpnPermissionResult(context)
+        }
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -266,7 +276,12 @@ private fun ProxyDetailSheet(
             // VPN start/stop button
             VpnButton(
                 isRunning = isRunning && isActiveProfile,
-                onStart = { viewModel.startVpn(context, profileName) },
+                onStart = {
+                    val intent = viewModel.prepareAndStartVpn(context, profileName)
+                    if (intent != null) {
+                        vpnPermissionLauncher.launch(intent)
+                    }
+                },
                 onStop = { viewModel.stopVpn(context) },
                 modifier = Modifier.padding(vertical = 4.dp)
             )

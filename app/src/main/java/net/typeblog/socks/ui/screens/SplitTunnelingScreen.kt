@@ -25,15 +25,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,29 +46,11 @@ import net.typeblog.socks.ui.components.AppToggleItem
 import net.typeblog.socks.util.Constants.PREF_ADV_APP_LIST
 
 /**
- * Demo app entries for the split tunneling showcase.
+ * Represents an installed app with its display name and package name.
  */
-private data class AppEntry(
+private data class InstalledApp(
     val name: String,
     val packageName: String
-)
-
-private val DemoApps = listOf(
-    AppEntry("Chrome", "com.android.chrome"),
-    AppEntry("YouTube", "com.google.android.youtube"),
-    AppEntry("WhatsApp", "com.whatsapp"),
-    AppEntry("Instagram", "com.instagram.android"),
-    AppEntry("Maps", "com.google.android.apps.maps"),
-    AppEntry("Gmail", "com.google.android.gm"),
-    AppEntry("Play Store", "com.android.vending"),
-    AppEntry("Twitter", "com.twitter.android"),
-    AppEntry("Telegram", "org.telegram.messenger"),
-    AppEntry("Discord", "com.discord"),
-    AppEntry("Netflix", "com.netflix.mediaclient"),
-    AppEntry("Spotify", "com.spotify.music"),
-    AppEntry("Reddit", "com.reddit.frontpage"),
-    AppEntry("TikTok", "com.ss.android.ugc.trill"),
-    AppEntry("Facebook", "com.facebook.katana")
 )
 
 /**
@@ -82,6 +68,7 @@ fun SplitTunnelingScreen(
 ) {
     val context = LocalContext.current
     val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+    val packageManager = context.packageManager
 
     // Load persisted app list into a set
     val persistedList = remember {
@@ -91,11 +78,33 @@ fun SplitTunnelingScreen(
             ?.toSet() ?: emptySet()
     }
 
-    // Toggle state for each demo app — true = in the VPN list, false = not
-    val toggleStates = remember {
-        mutableStateMapOf<String, Boolean>().apply {
-            DemoApps.forEach { app ->
-                put(app.packageName, persistedList.contains(app.packageName))
+    // Real installed launcher apps, loaded asynchronously
+    var installedApps by remember { mutableStateOf<List<InstalledApp>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        val apps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+            .filter { it.flags and ApplicationInfo.FLAG_INSTALLED != 0 }
+            .filter { packageManager.getLaunchIntentForPackage(it.packageName) != null }
+            .map {
+                InstalledApp(
+                    name = it.loadLabel(packageManager).toString(),
+                    packageName = it.packageName
+                )
+            }
+            .sortedBy { it.name.lowercase() }
+        installedApps = apps
+    }
+
+    // Toggle state for each app — true = in the VPN list, false = not
+    val toggleStates = remember { mutableStateMapOf<String, Boolean>() }
+
+    // Sync persisted toggle states once real apps are loaded
+    LaunchedEffect(installedApps) {
+        if (installedApps.isNotEmpty()) {
+            installedApps.forEach { app ->
+                if (!toggleStates.containsKey(app.packageName)) {
+                    toggleStates[app.packageName] = persistedList.contains(app.packageName)
+                }
             }
         }
     }
@@ -161,12 +170,22 @@ fun SplitTunnelingScreen(
 
             // ── App list ──
             // Filter: Allowed tab shows toggled-on apps; Blocked tab shows toggled-off apps
-            val filteredApps = DemoApps.filter { app ->
+            val filteredApps = installedApps.filter { app ->
                 val isOn = toggleStates[app.packageName] == true
                 if (selectedTab == 0) isOn else !isOn
             }
 
-            if (filteredApps.isEmpty()) {
+            if (installedApps.isEmpty()) {
+                Spacer(modifier = Modifier.height(40.dp))
+                Text(
+                    text = "Loading apps…",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp)
+                )
+            } else if (filteredApps.isEmpty()) {
                 Spacer(modifier = Modifier.height(40.dp))
                 Text(
                     text = if (selectedTab == 0)
