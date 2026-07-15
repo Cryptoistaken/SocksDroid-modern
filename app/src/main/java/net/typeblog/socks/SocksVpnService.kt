@@ -340,14 +340,14 @@ class SocksVpnService : VpnService() {
 
         if (!perApp) {
             try {
-                b.addDisallowedApplication("net.typeblog.socks")
+                b.addDisallowedApplication(packageName)
             } catch (e: Exception) {
                 Log.e(TAG, "Error: ${e.message}", e)
             }
         } else {
             if (bypass) {
                 try {
-                    b.addDisallowedApplication("net.typeblog.socks")
+                    b.addDisallowedApplication(packageName)
                 } catch (e: Exception) {
                     Log.e(TAG, "Error: ${e.message}", e)
                 }
@@ -361,7 +361,7 @@ class SocksVpnService : VpnService() {
                 }
             } else {
                 for (p in apps!!) {
-                    if (TextUtils.isEmpty(p) || p.trim { it <= ' ' } == "net.typeblog.socks") continue
+                    if (TextUtils.isEmpty(p) || p.trim { it <= ' ' } == packageName) continue
                     try {
                         b.addAllowedApplication(p.trim { it <= ' ' })
                     } catch (e: Exception) {
@@ -399,16 +399,15 @@ class SocksVpnService : VpnService() {
             "--socks-server-addr", "$server:$port",
             "--tunfd", fd.toString(),
             "--tunmtu", "1500",
-            "--loglevel", "3"
+            "--loglevel", "3",
+            "--pid", "$dir/tun2socks.pid"
         )
 
         if (!user.isNullOrEmpty()) {
             command.add("--username")
             command.add(user!!)
-        }
-        if (!passwd.isNullOrEmpty()) {
             command.add("--password")
-            command.add(passwd!!)
+            command.add(passwd ?: "")
         }
 
         if (ipv6) {
@@ -426,7 +425,7 @@ class SocksVpnService : VpnService() {
 
         Log.d(TAG, "tun2socks full command: ${command.joinToString(" ")}")
         
-        // Start tun2socks non-blocking (no daemonization). Store process for later cleanup.
+        // Start tun2socks non-blocking. --pid will daemonize; Process handle covers the parent which exits quickly. Store for later cleanup.
         try {
             val pb = ProcessBuilder(command)
             pb.redirectErrorStream(true)

@@ -64,22 +64,16 @@ object Utility {
     fun exec(cmd: Array<String>): Int {
         return try {
             Log.d(TAG, "Executing: ${cmd.contentToString()}")
-            val p = Runtime.getRuntime().exec(cmd)
+            val pb = ProcessBuilder(*cmd)
+            pb.redirectErrorStream(true)
+            val p = pb.start()
 
-            // Read stdout
-            val stdoutBr = java.io.BufferedReader(java.io.InputStreamReader(p.inputStream))
-            var stdoutLine = stdoutBr.readLine()
-            while (stdoutLine != null) {
-                Log.d(TAG, "STDOUT: $stdoutLine")
-                stdoutLine = stdoutBr.readLine()
-            }
-
-            // Read stderr
-            val stderrBr = java.io.BufferedReader(java.io.InputStreamReader(p.errorStream))
-            var stderrLine = stderrBr.readLine()
-            while (stderrLine != null) {
-                Log.e(TAG, "STDERR: $stderrLine")
-                stderrLine = stderrBr.readLine()
+            // Read merged stdout/stderr to prevent buffer deadlock
+            val br = java.io.BufferedReader(java.io.InputStreamReader(p.inputStream))
+            var line = br.readLine()
+            while (line != null) {
+                Log.d(TAG, "exec: $line")
+                line = br.readLine()
             }
 
             val ret = p.waitFor()
