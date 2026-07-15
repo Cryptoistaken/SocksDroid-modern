@@ -1,4 +1,4 @@
-# SocksDroid-modern — Master Plan
+# KiloProxy — Master Plan
 
 > **Source:** https://github.com/AlexeyRF/SocksDroid-modern
 > **Goal:** Fork → fix security → modernize UI (SuperProxy-like) → clean architecture

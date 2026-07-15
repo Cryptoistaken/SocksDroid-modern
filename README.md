@@ -1,6 +1,6 @@
-# SocksDroid-modern
+# KiloProxy
 
-A modern fork of [SocksDroid](https://github.com/AlexeyRF/SocksDroid) — an Android SOCKS5 VPN client with per-app proxy, DNS customization, and multi-profile management.
+KiloProxy — a modern Android SOCKS5 VPN client (forked from [SocksDroid](https://github.com/AlexeyRF/SocksDroid)) with per-app proxy, DNS customization, and multi-profile management.
 
 **Status:** Backend features complete. UI redesign in progress (Compose migration Phase 2).
 

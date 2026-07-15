@@ -4,7 +4,7 @@ Copy and paste this entire block into a new chat session:
 
 ---
 
-I'm working on the **SocksDroid-modern** project — a fork of SocksDroid (Android SOCKS5 VPN client) that we're modernizing and redesigning.
+I'm working on the **KiloProxy** project — a modern Android SOCKS5 VPN client (forked from SocksDroid) that we're redesigning and polishing.
 
 **Repo:** https://github.com/AlexeyRF/SocksDroid-modern
 

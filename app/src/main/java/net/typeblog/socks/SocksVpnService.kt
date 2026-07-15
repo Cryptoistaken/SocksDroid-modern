@@ -233,7 +233,7 @@ class SocksVpnService : VpnService() {
     private fun configure(name: String?, route: String?, perApp: Boolean, bypass: Boolean, apps: Array<String>?, ipv6: Boolean) {
         val b = Builder()
         b.setMtu(1500)
-            .setSession(name ?: "SocksDroid")
+            .setSession(name ?: "KiloProxy")
             .addAddress("10.10.10.1", 24)
             .addDnsServer("8.8.8.8")
 
